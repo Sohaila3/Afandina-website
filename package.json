@@ -10,7 +10,8 @@
     "dev:ssr": "ng run my-angular-project:serve-ssr",
     "serve:ssr": "node dist/my-angular-project/server/main.js",
     "build:ssr": "ng build && ng run my-angular-project:server",
-    "prerender": "ng run my-angular-project:prerender"
+    "prerender": "ng run my-angular-project:prerender",
+    "vercel-build": "ng build --configuration production"
   },
   "private": true,
   "dependencies": {
