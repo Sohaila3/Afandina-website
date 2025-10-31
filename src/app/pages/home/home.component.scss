@@ -15,7 +15,8 @@
   // MODERN SOCIAL ICONS
   // ============================================
   .social-icons-modern {
-    position: fixed;
+    /* keep icons inside the hero container (not fixed to viewport) */
+    position: absolute;
     left: 40px;
     top: 50%;
     transform: translateY(-50%);
@@ -669,18 +670,8 @@
     max-height: none;
 
     .social-icons-modern {
-      flex-direction: row;
-      left: 50%;
-      top: auto;
-      bottom: 100px;
-      transform: translateX(-50%);
-      gap: 12px;
-
-      .social-icon-wrapper .social-link {
-        width: 42px;
-        height: 42px;
-        font-size: 16px;
-      }
+      /* hide social icons on small/mobile screens */
+      display: none;
     }
 
     .hero-content {
@@ -723,9 +714,12 @@
         flex-direction: column;
         gap: 16px;
         margin-top: 40px;
+        align-items: center; /* center stacked cards and allow max-width */
 
         .stat-card {
           width: 100%;
+          max-width: 520px; /* keep cards from stretching too wide on small desktops */
+          margin: 0 auto;
           padding: 14px 18px;
           gap: 12px;
 
@@ -784,16 +778,18 @@
       .stats-cards .stat-card {
         padding: 12px 14px;
         gap: 10px;
+        max-width: 420px;
+        margin: 0 auto;
 
         .stat-icon {
           width: 36px;
           height: 36px;
-          font-size: 18px;
+          font-size: 16px;
         }
 
         .stat-content {
           .stat-number {
-            font-size: 20px;
+            font-size: 18px;
           }
           .stat-label {
             font-size: 10px;
