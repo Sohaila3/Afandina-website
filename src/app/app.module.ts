@@ -8,7 +8,11 @@ import { HomeComponent } from './pages/home/home.component';
 import { MaterialModule } from './shared-modules/material/material.module';
 import { SwiperModule } from 'swiper/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule, HttpClient, HTTP_INTERCEPTORS } from '@angular/common/http';
+import {
+  HttpClientModule,
+  HttpClient,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { createTranslateLoader } from './translate/translate-loader';
 import { SharedModule } from './shared/shared.module';
@@ -21,13 +25,14 @@ import { TranslationService } from './core/services/Translation/translation.serv
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { NotFoundInterceptor } from './core/interceptors/not-found.interceptor';
 import { AllCarsComponent } from './pages/all-cars/all-cars.component';
+import { GoogleMapsModule } from '@angular/google-maps';
 
 @NgModule({
   declarations: [
     AppComponent,
     HomeComponent,
     NotFoundComponent,
-    AllCarsComponent
+    AllCarsComponent,
   ],
   imports: [
     BrowserModule,
@@ -42,28 +47,33 @@ import { AllCarsComponent } from './pages/all-cars/all-cars.component';
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
-        useFactory: (createTranslateLoader),
-        deps: [HttpClient]
-      }
+        useFactory: createTranslateLoader,
+        deps: [HttpClient],
+      },
     }),
     SharedModule,
+    GoogleMapsModule,
   ],
   providers: [
-    { provide: HTTP_INTERCEPTORS, useClass: LanguageCurrencyInterceptor, multi: true },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LanguageCurrencyInterceptor,
+      multi: true,
+    },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: LoaderInterceptor,
-      multi: true
+      multi: true,
     },
     {
       provide: HTTP_INTERCEPTORS,
       useClass: NotFoundInterceptor,
-      multi: true
+      multi: true,
     },
     LoaderService,
     LanguageService,
-    TranslationService
+    TranslationService,
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
 })
-export class AppModule { }
+export class AppModule {}

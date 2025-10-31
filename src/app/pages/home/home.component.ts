@@ -40,6 +40,10 @@ import { SwiperOptions } from 'swiper';
 import { SwiperComponent } from 'swiper/angular';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { Inject, PLATFORM_ID } from '@angular/core';
+import { GoogleMapsModule, GoogleMap } from '@angular/google-maps';
+
+// Declare google maps
+declare var google: any;
 
 // Install Swiper modules
 SwiperCore.use([Autoplay, EffectFade, Pagination, Navigation, Parallax]);
@@ -57,6 +61,18 @@ interface HeroSlide {
   show_stats?: boolean;
 }
 
+// Interface for Location (Add this)
+interface Location {
+  id: number;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  icon?: string;
+  phone?: string;
+  email?: string;
+}
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
@@ -64,6 +80,7 @@ interface HeroSlide {
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('heroSwiper') heroSwiper?: SwiperComponent;
+  @ViewChild('googleMap') googleMap?: GoogleMap;
 
   // ============================================
   // HERO SECTION PROPERTIES
@@ -94,6 +111,14 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     },
   };
+
+  // ============================================
+  // MAP PROPERTIES (NEW)
+  // ============================================
+  mapCenter = { lat: 25.2048, lng: 55.2708 }; // Dubai coordinates
+  mapZoom = 11;
+  mapMarkers: any[] = [];
+  selectedLocation: Location | null = null;
 
   // ============================================
   // EXISTING PROPERTIES
@@ -248,6 +273,11 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Prepare hero slides from header section
       this.prepareHeroSlides();
+
+      // Initialize map (NEW)
+      if (isPlatformBrowser(this.platformId)) {
+        setTimeout(() => this.initializeMap(), 100);
+      }
     });
   }
 
@@ -341,6 +371,165 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   onSlideChange(event?: any) {
     if (this.heroSwiper?.swiperRef) {
       this.currentSlideIndex = this.heroSwiper.swiperRef.realIndex;
+    }
+  }
+
+  // ============================================
+  // MAP METHODS (NEW)
+  // ============================================
+
+  /**
+   * Initialize Google Maps with markers
+   */
+  initializeMap() {
+    if (this.where_find_us?.locations) {
+      // Build markers robustly: locations may come with lat/lng numbers, or
+      // a coords string, or under a nested position object. Handle common shapes.
+      this.mapMarkers = this.where_find_us.locations
+        .map((location: any) => {
+          // Try a few patterns to extract lat/lng
+          let lat: number | undefined;
+          let lng: number | undefined;
+
+          if (location.lat !== undefined && location.lng !== undefined) {
+            lat = Number(location.lat);
+            lng = Number(location.lng);
+          } else if (
+            location.latitude !== undefined &&
+            location.longitude !== undefined
+          ) {
+            lat = Number(location.latitude);
+            lng = Number(location.longitude);
+          } else if (location.position && location.position.lat !== undefined) {
+            lat = Number(location.position.lat);
+            lng = Number(location.position.lng);
+          } else if (location.coords && typeof location.coords === 'string') {
+            // coords may be "lat,lng" or a string with whitespace
+            const parts = location.coords
+              .split(/[\s,]+/)
+              .map((p: string) => p.trim())
+              .filter(Boolean);
+            if (parts.length >= 2) {
+              lat = Number(parts[0]);
+              lng = Number(parts[1]);
+            }
+          }
+
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            return {
+              position: { lat, lng },
+              label: {
+                text: location.name || '',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontWeight: 'bold',
+              },
+              title: location.name,
+              icon: {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTgiIGZpbGw9IiNGRkQzMDAiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjgiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+',
+                scaledSize: { width: 40, height: 40 },
+              },
+              data: location,
+            };
+          }
+
+          // Skip invalid locations (no coordinates)
+          return null;
+        })
+        .filter((m: any) => m !== null);
+
+      // Calculate center based on all markers
+      if (this.mapMarkers.length > 0) {
+        const avgLat =
+          this.mapMarkers.reduce((sum, m) => sum + m.position.lat, 0) /
+          this.mapMarkers.length;
+        const avgLng =
+          this.mapMarkers.reduce((sum, m) => sum + m.position.lng, 0) /
+          this.mapMarkers.length;
+        this.mapCenter = { lat: avgLat, lng: avgLng };
+      }
+    }
+  }
+
+  /**
+   * Handle marker click event
+   * @param marker - The clicked marker
+   */
+  onMarkerClick(marker: any) {
+    this.selectedLocation = marker.data;
+  }
+
+  /**
+   * Close location details modal
+   */
+  closeLocationDetails() {
+    this.selectedLocation = null;
+  }
+
+  /**
+   * Navigate to location in Google Maps
+   * @param location - Location to navigate to
+   */
+  navigateToLocation(location: Location) {
+    // Accept either a location object, or a marker-like object with position,
+    // or a coords string. Build a directions URL to open Google Maps with
+    // destination set to lat,lng when possible; otherwise fall back to a search by name.
+    let lat: number | undefined;
+    let lng: number | undefined;
+    const loc: any = location;
+
+    if (loc.lat !== undefined && loc.lng !== undefined) {
+      lat = Number(loc.lat);
+      lng = Number(loc.lng);
+    } else if (loc.latitude !== undefined && loc.longitude !== undefined) {
+      lat = Number(loc.latitude);
+      lng = Number(loc.longitude);
+    } else if (loc.position && loc.position.lat !== undefined) {
+      lat = Number(loc.position.lat);
+      lng = Number(loc.position.lng);
+    } else if (loc.coords && typeof loc.coords === 'string') {
+      const parts = loc.coords
+        .split(/[\s,]+/)
+        .map((p: string) => p.trim())
+        .filter(Boolean);
+      if (parts.length >= 2) {
+        lat = Number(parts[0]);
+        lng = Number(parts[1]);
+      }
+    }
+
+    if (Number.isFinite(lat) && Number.isFinite(lng)) {
+      // Pan the inline google-map to the selected location and zoom in
+      this.mapCenter = { lat: lat!, lng: lng! };
+      this.mapZoom = Math.max(this.mapZoom, 14);
+
+      // If we have a ViewChild reference to the GoogleMap, call panTo
+      try {
+        if (this.googleMap && typeof this.googleMap.panTo === 'function') {
+          this.googleMap.panTo({ lat: lat!, lng: lng! });
+        }
+      } catch (err) {
+        // ignore pan failures; mapCenter/zoom update will still reposition map
+        console.warn('googleMap.panTo failed', err);
+      }
+
+      // Find matching marker and open its details in the sidebar/modal
+      const found = this.mapMarkers.find(
+        (m) => m.position && m.position.lat === lat && m.position.lng === lng
+      );
+      if (found) {
+        this.onMarkerClick(found);
+      } else {
+        // Set selected location to provided data so modal shows details
+        this.selectedLocation = loc;
+      }
+    } else {
+      // fallback: search by name or address in a new tab
+      const q = encodeURIComponent(
+        loc.name || loc.address || 'Afandina Car Rental'
+      );
+      const url = `https://www.google.com/maps/search/?api=1&query=${q}`;
+      window.open(url, '_blank');
     }
   }
 
@@ -467,6 +656,58 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.translations['pause_video']) {
         this.translations['pause_video'] =
           this.currentLang === 'ar' ? 'إيقاف الفيديو' : 'Pause video';
+      }
+
+      // Map/Location Section Translations (NEW)
+      if (!this.translations['our_locations']) {
+        this.translations['our_locations'] =
+          this.currentLang === 'ar' ? 'مواقعنا' : 'Our Locations';
+      }
+      if (!this.translations['where_to_find_us']) {
+        this.translations['where_to_find_us'] =
+          this.currentLang === 'ar' ? 'أين تجدنا' : 'Where to Find Us';
+      }
+      if (!this.translations['find_us_description']) {
+        this.translations['find_us_description'] =
+          this.currentLang === 'ar'
+            ? 'قم بزيارة أي من فروعنا المناسبة في جميع أنحاء الإمارات'
+            : 'Visit any of our convenient locations across the UAE';
+      }
+      if (!this.translations['all_branches']) {
+        this.translations['all_branches'] =
+          this.currentLang === 'ar' ? 'جميع الفروع' : 'All Branches';
+      }
+      if (!this.translations['get_directions']) {
+        this.translations['get_directions'] =
+          this.currentLang === 'ar' ? 'احصل على الاتجاهات' : 'Get Directions';
+      }
+      if (!this.translations['contact_us']) {
+        this.translations['contact_us'] =
+          this.currentLang === 'ar' ? 'اتصل بنا' : 'Contact Us';
+      }
+      if (!this.translations['branches']) {
+        this.translations['branches'] =
+          this.currentLang === 'ar' ? 'فرع' : 'Branches';
+      }
+      if (!this.translations['cities']) {
+        this.translations['cities'] =
+          this.currentLang === 'ar' ? 'مدن' : 'Cities';
+      }
+      if (!this.translations['availability']) {
+        this.translations['availability'] =
+          this.currentLang === 'ar' ? 'متاح' : 'Available';
+      }
+      if (!this.translations['support']) {
+        this.translations['support'] =
+          this.currentLang === 'ar' ? 'دعم' : 'Support';
+      }
+      if (!this.translations['zoom_in']) {
+        this.translations['zoom_in'] =
+          this.currentLang === 'ar' ? 'تكبير' : 'Zoom In';
+      }
+      if (!this.translations['zoom_out']) {
+        this.translations['zoom_out'] =
+          this.currentLang === 'ar' ? 'تصغير' : 'Zoom Out';
       }
     });
   }

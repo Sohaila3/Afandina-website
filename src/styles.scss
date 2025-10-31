@@ -1,9 +1,9 @@
-body{
+body {
   overflow-x: hidden;
   // width: 1420px;
   // margin: auto;
 }
-.container-fluid{
+.container-fluid {
   max-width: 1440px;
   margin: auto;
 }
@@ -42,11 +42,10 @@ p {
   height: 5px;
   width: 5px;
   background-color: #f7f7f7;
-
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #DCB87A;
+  background-color: #dcb87a;
   border-radius: 4px;
 }
 
@@ -71,7 +70,7 @@ p {
 
 .loader {
   border: 8px solid #f3f3f3;
-  border-top: 8px solid #DCB87A;
+  border-top: 8px solid #dcb87a;
   border-radius: 50%;
   width: 50px;
   height: 50px;
@@ -79,29 +78,40 @@ p {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.p-accordion .p-accordion-tab .p-accordion-header .p-accordion-header-link:hover{
+.p-accordion
+  .p-accordion-tab
+  .p-accordion-header
+  .p-accordion-header-link:hover {
   transition: all 0.3s linear;
-  color: #DCB87A !important;
+  color: #dcb87a !important;
 }
 
 .p-accordion .p-accordion-toggle-icon {
   order: 2;
   transition: all 0.3s linear;
-
 }
 
-.related_blogs_head{
-  h2{
+.related_blogs_head {
+  h2 {
     text-transform: capitalize;
   }
 }
 
 // Global heading styles
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   text-transform: capitalize;
 }
 
@@ -124,7 +134,7 @@ input[type="button"],
 // Special buttons with Title Case capitalization
 .whatsapp,
 .call_us {
-  text-transform: capitalize !important;  // Make first letter of each word uppercase
+  text-transform: capitalize !important; // Make first letter of each word uppercase
 }
 
 // =================================================================================
@@ -146,10 +156,10 @@ input[type="button"],
 //     background: transparent !important;
 //     padding: 0 !important;
 //   }
-//   .p-galleria .p-galleria-thumbnail-container 
-//   .p-galleria-thumbnail-prev, 
-//   .p-galleria 
-//   .p-galleria-thumbnail-container 
+//   .p-galleria .p-galleria-thumbnail-container
+//   .p-galleria-thumbnail-prev,
+//   .p-galleria
+//   .p-galleria-thumbnail-container
 //   .p-galleria-thumbnail-next {
 //     display: none !important;
 //   }
@@ -177,7 +187,6 @@ input[type="button"],
 
 // }
 
-
 // .p-galleria-thumbnail-items {
 //   transform: none !important;
 // }
@@ -189,18 +198,19 @@ input[type="button"],
 //   position: absolute !important;
 // }
 
-@import './app/shared/styles/rich-text';
+@import "./app/shared/styles/rich-text";
 
 @media only screen and (max-width: 500px) {
-  .dropdown-item.ar {
-      left: 0 !important;
-      right: auto !important;
-      text-align: right;
+  /* direction-aware dropdown alignment for small screens */
+  .dropdown-menu[dir="rtl"] .dropdown-item {
+    right: 0 !important;
+    left: auto !important;
+    text-align: right;
   }
 
-  .dropdown-item.en {
-      right: 0 !important;
-      left: auto !important;
-      text-align: left;
+  .dropdown-menu[dir="ltr"] .dropdown-item {
+    left: 0 !important;
+    right: auto !important;
+    text-align: left;
   }
 }

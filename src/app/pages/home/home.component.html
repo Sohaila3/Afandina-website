@@ -306,6 +306,8 @@
         [spaceBetween]="0"
         [slidesPerView]="7.5"
         [navigation]="false"
+        [autoplay]="{ delay: 1000, disableOnInteraction: false }"
+        [loop]="true"
         class="mySwiper"
         [breakpoints]="swiperBrand.breakpoints"
       >
@@ -518,55 +520,224 @@
     </div>
   </section>
 
-  <section class="why_us py-4" *ngIf="whyChooseUsSection">
+  <section class="where_find_us_modern py-5">
     <div class="container-fluid">
-      <div class="row">
-        <div class="col-lg-5">
-          <div class="head">
-            <h2>{{ whyChooseUsSection.why_choose_us_title }}</h2>
-            <p
-              class="mb-3"
-              [innerHTML]="whyChooseUsSection.why_choose_us_section_paragraph"
-            ></p>
-            <a
-              [routerLink]="['/', currentLang, 'about-us']"
-              class="View_All m-0"
-              title="view all"
-              >{{ translations["view_all"] }}</a
-            >
-          </div>
+      <!-- Section Header -->
+      <div class="section-header text-center mb-5">
+        <div class="header-badge">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>{{ translations["our_locations"] || "Our Locations" }}</span>
         </div>
-        <div class="col-lg-7">
-          <div class="row" style="max-width: 800px; margin: auto">
-            <div
-              class="col-sm-6"
-              *ngFor="let data of whyChooseUsSection.services"
-            >
-              <div class="card p-2 mb-2">
-                <div class="head m-0 mb-2 d-flex align-items-center">
-                  <img
-                    src="../../../assets/images/icon/icon.svg"
-                    width="35px"
-                    height="35px"
-                    [alt]="data.name + ' icon'"
-                    [title]="data.name"
-                    loading="lazy"
-                  />
-                  <h3 class="m-0 mx-2">{{ data.name }}</h3>
-                </div>
-                <div class="body">
-                  <p>
-                    {{ data.description }}
-                  </p>
+        <h2 class="section-title mb-3">
+          {{
+            where_find_us?.where_find_us_section_title ||
+              translations["where_to_find_us"]
+          }}
+        </h2>
+        <p class="section-description w-75 m-auto">
+          {{
+            where_find_us?.where_find_us_section_paragraph ||
+              translations["find_us_description"]
+          }}
+        </p>
+      </div>
+
+      <!-- Map and Locations Container -->
+      <div class="map-locations-wrapper">
+        <div class="row g-4">
+          <!-- Interactive Map -->
+          <div class="col-lg-8">
+            <div class="map-container">
+              <!-- Static image placeholder replacing Google Map -->
+              <img
+                src="../../../assets/images/logo/found-us.png"
+                alt="Find us"
+                title="Find Afandina locations"
+                width="100%"
+                height="600px"
+                class="img-fluid w-100"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <!-- Locations List -->
+          <div class="col-lg-4">
+            <div class="locations-sidebar">
+              <h3 class="sidebar-title">
+                {{ translations["all_branches"] || "All Branches" }}
+              </h3>
+
+              <div class="locations-list">
+                <div
+                  class="location-card"
+                  *ngFor="
+                    let location of where_find_us?.locations;
+                    let i = index
+                  "
+                  [class.active]="selectedLocation?.id === location.id"
+                  (click)="onMarkerClick(mapMarkers[i])"
+                >
+                  <div class="location-card-header">
+                    <div class="location-icon">
+                      <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="location-info">
+                      <h4 class="location-name">{{ location.name }}</h4>
+                      <p class="location-address">
+                        <i class="fas fa-location-dot"></i>
+                        {{ location.address }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div
+                    class="location-card-body"
+                    *ngIf="location.phone || location.email"
+                  >
+                    <div class="location-contact" *ngIf="location.phone">
+                      <i class="fas fa-phone"></i>
+                      <a [href]="'tel:' + location.phone">{{
+                        location.phone
+                      }}</a>
+                    </div>
+                    <div class="location-contact" *ngIf="location.email">
+                      <i class="fas fa-envelope"></i>
+                      <a [href]="'mailto:' + location.email">{{
+                        location.email
+                      }}</a>
+                    </div>
+                  </div>
+
+                  <div class="location-card-footer">
+                    <button
+                      class="direction-btn"
+                      (click)="
+                        navigateToLocation(location); $event.stopPropagation()
+                      "
+                    >
+                      <i class="fas fa-directions"></i>
+                      <span>{{
+                        translations["get_directions"] || "Get Directions"
+                      }}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Location Details Modal (appears when marker clicked) -->
+      <div
+        class="location-modal"
+        *ngIf="selectedLocation"
+        (click)="closeLocationDetails()"
+      >
+        <div class="location-modal-content" (click)="$event.stopPropagation()">
+          <button class="modal-close" (click)="closeLocationDetails()">
+            <i class="fas fa-times"></i>
+          </button>
+
+          <div class="modal-header">
+            <div class="modal-icon">
+              <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h3>{{ selectedLocation.name }}</h3>
+          </div>
+
+          <div class="modal-body">
+            <div class="modal-detail">
+              <i class="fas fa-location-dot"></i>
+              <p>{{ selectedLocation.address }}</p>
+            </div>
+            <div class="modal-detail" *ngIf="selectedLocation.phone">
+              <i class="fas fa-phone"></i>
+              <a [href]="'tel:' + selectedLocation.phone">{{
+                selectedLocation.phone
+              }}</a>
+            </div>
+            <div class="modal-detail" *ngIf="selectedLocation.email">
+              <i class="fas fa-envelope"></i>
+              <a [href]="'mailto:' + selectedLocation.email">{{
+                selectedLocation.email
+              }}</a>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button
+              class="modal-btn primary"
+              (click)="navigateToLocation(selectedLocation)"
+            >
+              <i class="fas fa-directions"></i>
+              <span>{{
+                translations["get_directions"] || "Get Directions"
+              }}</span>
+            </button>
+            <button
+              class="modal-btn secondary"
+              [routerLink]="['/', currentLang, 'contact']"
+            >
+              <i class="fas fa-phone"></i>
+              <span>{{ translations["contact_us"] || "Contact Us" }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Section -->
+      <div class="location-stats mt-5">
+        <div class="row text-center g-4">
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-map-marked-alt"></i>
+              </div>
+              <h4 class="stat-number">
+                {{ where_find_us?.locations?.length || 10 }}+
+              </h4>
+              <p class="stat-label">
+                {{ translations["branches"] || "Branches" }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-city"></i>
+              </div>
+              <h4 class="stat-number">5+</h4>
+              <p class="stat-label">{{ translations["cities"] || "Cities" }}</p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <h4 class="stat-number">24/7</h4>
+              <p class="stat-label">
+                {{ translations["availability"] || "Available" }}
+              </p>
+            </div>
+          </div>
+          <div class="col-md-3 col-6">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-headset"></i>
+              </div>
+              <h4 class="stat-number">100%</h4>
+              <p class="stat-label">
+                {{ translations["support"] || "Support" }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
-
   <section class="faq">
     <div class="container-fluid">
       <div class="row">
@@ -623,68 +794,51 @@
     </div>
   </section>
 
-  <section class="where_find_us py-4">
+  <section class="why_us py-4" *ngIf="whyChooseUsSection">
     <div class="container-fluid">
-      <div class="head text-center w-75 m-auto mb-5">
-        <h2 class="mb-3">
-          {{ where_find_us?.where_find_us_section_title }}
-        </h2>
-        <p>
-          {{ where_find_us?.where_find_us_section_paragraph }}
-        </p>
-      </div>
-      <div class="web_map">
-        <img
-          src="../../../assets/images/delete/Group_36.svg"
-          class="d-block m-auto"
-          width="80%"
-          height="500px"
-          alt="Afandina Car Rental Locations Map"
-          title="Find Afandina Car Rental Locations"
-          style="max-width: 100%; object-fit: contain"
-          loading="lazy"
-          usemap="#image-map"
-        />
-        <map name="image-map">
-          <area
-            target="_blank"
-            [alt]="where_find_us?.locations[0]?.name"
-            [title]="where_find_us?.locations[0]?.name"
-            [coords]="where_find_us?.locations[0]?.coords"
-            shape="circle"
-            [routerLink]="['/', currentLang, 'contact']"
-          />
-
-          <area
-            target="_blank"
-            [alt]="where_find_us?.locations[1]?.name"
-            [title]="where_find_us?.locations[1]?.name"
-            [coords]="where_find_us?.locations[1]?.coords"
-            shape="circle"
-            [routerLink]="['/', currentLang, 'contact']"
-          />
-          <area
-            target="_blank"
-            [alt]="where_find_us?.locations[2]?.name"
-            [title]="where_find_us?.locations[2]?.name"
-            [coords]="where_find_us?.locations[2]?.coords"
-            shape="poly"
-            [routerLink]="['/', currentLang, 'contact']"
-          />
-        </map>
-      </div>
-      <div class="mobile_map">
-        <img
-          src="../../../assets/images/delete/Group_36_resized.webp"
-          width="50%"
-          height="150px"
-          alt="Afandina Car Rental Mobile Locations Map"
-          title="Find Afandina Car Rental Locations"
-          class="d-block m-auto"
-          style="max-width: 100%"
-          loading="lazy"
-          usemap="#image-map"
-        />
+      <div class="row">
+        <div class="col-lg-5">
+          <div class="head">
+            <h2>{{ whyChooseUsSection.why_choose_us_title }}</h2>
+            <p
+              class="mb-3"
+              [innerHTML]="whyChooseUsSection.why_choose_us_section_paragraph"
+            ></p>
+            <a
+              [routerLink]="['/', currentLang, 'about-us']"
+              class="View_All m-0"
+              title="view all"
+              >{{ translations["view_all"] }}</a
+            >
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="row" style="max-width: 800px; margin: auto">
+            <div
+              class="col-sm-6"
+              *ngFor="let data of whyChooseUsSection.services"
+            >
+              <div class="card p-2 mb-2">
+                <div class="head m-0 mb-2 d-flex align-items-center">
+                  <img
+                    src="../../../assets/images/icon/icon.svg"
+                    width="35px"
+                    height="35px"
+                    [alt]="data.name + ' icon'"
+                    [title]="data.name"
+                    loading="lazy"
+                  />
+                  <h3 class="m-0 mx-2">{{ data.name }}</h3>
+                </div>
+                <div class="body">
+                  <p>
+                    {{ data.description }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>

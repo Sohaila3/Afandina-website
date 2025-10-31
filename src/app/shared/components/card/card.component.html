@@ -2,17 +2,19 @@
   <ng-template pTemplate="header">
     <div class="position-relative img_card">
       <swiper
+        #productSwiper
         [spaceBetween]="10"
         [slidesPerView]="1"
         [pagination]="{
           clickable: true,
           type: 'bullets',
-          dynamicBullets: true
+          dynamicBullets: false
         }"
         [loop]="true"
         [autoplay]="false"
         [effect]="'slide'"
         [navigation]="false"
+        (slideChange)="onSlideChange()"
         class="product-swiper"
       >
         <ng-template swiperSlide *ngFor="let image of carData.images">
@@ -61,6 +63,23 @@
           </ng-container>
         </ng-template>
       </swiper>
+
+      <!-- Custom pagination: show a sliding window of dots (maxVisible controlled in TS) -->
+      <div class="custom-pagination" *ngIf="carData?.images?.length > 1">
+        <div class="custom-pagination-viewport">
+          <div class="custom-pagination-list">
+            <button
+              *ngFor="let i of visibleIndexes(); trackBy: trackByImageIndex"
+              type="button"
+              class="custom-dot"
+              [class.active]="i === currentIndex"
+              (mouseenter)="goToSlide(i)"
+              (click)="goToSlide(i)"
+              [attr.aria-label]="'Go to slide ' + (i + 1)"
+            ></button>
+          </div>
+        </div>
+      </div>
       <span
         class="position-absolute top-0 start-0 sale"
         *ngIf="carData.discount_rate != '.' && carData.discount_rate != '0'"

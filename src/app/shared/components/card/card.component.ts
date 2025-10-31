@@ -4,6 +4,9 @@ import {
   Input,
   OnInit,
   OnDestroy,
+  AfterViewInit,
+  ViewChild,
+  ElementRef,
   Inject,
   PLATFORM_ID,
 } from '@angular/core';
@@ -12,6 +15,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import SwiperCore, { Pagination, Autoplay, Navigation } from 'swiper';
+import { SwiperComponent } from 'swiper/angular';
 
 // Services
 import { LanguageService } from 'src/app/core/services/language.service';
@@ -26,7 +30,7 @@ SwiperCore.use([Pagination, Autoplay, Navigation]);
   templateUrl: './card.component.html',
   styleUrls: ['./card.component.scss'],
 })
-export class CardComponent implements OnInit, OnDestroy {
+export class CardComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() carData: any;
 
   currentLang: string = 'en';
@@ -39,6 +43,14 @@ export class CardComponent implements OnInit, OnDestroy {
   currency_name: string | null = null;
 
   private destroy$ = new Subject<void>();
+  @ViewChild('productSwiper', { static: false })
+  productSwiper?: SwiperComponent;
+
+  // pagination window settings
+  maxVisibleDots = 4;
+  startIndex = 0;
+  endIndex = 0;
+  currentIndex = 0;
 
   constructor(
     private languageService: LanguageService,
@@ -47,12 +59,30 @@ export class CardComponent implements OnInit, OnDestroy {
     private router: Router,
     private translationService: TranslationService,
     private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private elRef: ElementRef
   ) {
     // Initialize browser-specific data
     if (isPlatformBrowser(this.platformId)) {
       this.currency_name = localStorage.getItem('currency_name');
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize pagination window based on current swiper index
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    setTimeout(() => {
+      try {
+        const swiperRef = this.productSwiper?.swiperRef;
+        const active = swiperRef?.realIndex ?? swiperRef?.activeIndex ?? 0;
+        this.currentIndex = active;
+        this.updateWindow();
+      } catch (err) {
+        this.currentIndex = 0;
+        this.updateWindow();
+      }
+    }, 150);
   }
 
   /**
@@ -171,5 +201,70 @@ export class CardComponent implements OnInit, OnDestroy {
    */
   sanitizeUrl(url: string): SafeResourceUrl {
     return this.sanitizer.sanitize(1, url) || '';
+  }
+
+  /**
+   * Update pagination window (startIndex/endIndex) based on currentIndex
+   */
+  private updateWindow(): void {
+    const total = this.carData?.images?.length || 0;
+    if (total <= this.maxVisibleDots) {
+      this.startIndex = 0;
+      this.endIndex = total;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    const half = Math.floor(this.maxVisibleDots / 2);
+    let start = this.currentIndex - half;
+    if (start < 0) start = 0;
+    if (start > total - this.maxVisibleDots)
+      start = total - this.maxVisibleDots;
+    this.startIndex = start;
+    this.endIndex = start + this.maxVisibleDots;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * Return array of visible slide indexes for ngFor
+   */
+  visibleIndexes(): number[] {
+    const total = this.carData?.images?.length || 0;
+    const result: number[] = [];
+    for (let i = this.startIndex; i < Math.min(this.endIndex, total); i++)
+      result.push(i);
+    return result;
+  }
+
+  /**
+   * Navigate to a slide (called on hover or click)
+   */
+  goToSlide(index: number): void {
+    try {
+      // prefer slideToLoop when loop is enabled to map correctly
+      if (this.productSwiper?.swiperRef?.slideToLoop) {
+        this.productSwiper?.swiperRef?.slideToLoop(index);
+      } else {
+        this.productSwiper?.swiperRef?.slideTo(index);
+      }
+      this.currentIndex = index;
+      this.updateWindow();
+    } catch (err) {
+      // ignore errors
+    }
+  }
+
+  /**
+   * Called by Swiper when active slide changes
+   */
+  onSlideChange(): void {
+    try {
+      const swiperRef = this.productSwiper?.swiperRef;
+      const active = swiperRef?.realIndex ?? swiperRef?.activeIndex ?? 0;
+      this.currentIndex = active;
+      this.updateWindow();
+    } catch (err) {
+      // ignore
+    }
   }
 }

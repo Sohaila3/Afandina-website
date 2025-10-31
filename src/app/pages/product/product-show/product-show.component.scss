@@ -1,4 +1,4 @@
-// Enhanced Product Show Styles with SEO Optimizations
+// Enhanced Product Show Styles with Modern Design
 .product_show {
   margin: 20px;
 
@@ -52,12 +52,13 @@
   text-transform: capitalize;
 }
 
-/* New header layout for description with nicer show-more button */
+/* Modern Description Header with Show More Button */
 .description-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin-bottom: 16px;
 
   .description-title {
     margin: 0;
@@ -68,20 +69,42 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(90deg, #dcb87a 0%, #caa469 100%);
+    background: linear-gradient(135deg, #dcb87a 0%, #caa469 100%);
     color: #1b1b1b;
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 24px;
     border: none;
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 6px 18px rgba(204, 167, 120, 0.22);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    box-shadow: 0 4px 12px rgba(220, 184, 122, 0.25);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #e5c589 0%, #d4af75 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(204, 167, 120, 0.28);
+      box-shadow: 0 6px 20px rgba(220, 184, 122, 0.35);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    &:active {
+      transform: translateY(0);
     }
 
     &:focus {
@@ -89,22 +112,26 @@
       outline-offset: 2px;
     }
 
+    .label,
     .icon {
-      font-size: 10px;
-      color: rgba(27, 27, 27, 0.9);
-      transition: transform 0.18s ease;
+      position: relative;
+      z-index: 1;
     }
 
-    /* rotate icon when expanded */
+    .icon {
+      font-size: 11px;
+      color: rgba(27, 27, 27, 0.9);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     &[aria-expanded="true"] .icon {
-      transform: rotate(-180deg);
+      transform: rotate(180deg);
     }
   }
 }
 
-/* Tighter description wrapper visuals */
 .description-wrapper {
-  transition: max-height 0.35s ease, overflow 0.35s ease;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), overflow 0.4s ease;
   position: relative;
 }
 
@@ -116,13 +143,14 @@
   margin: auto;
 
   .rating {
-    background: #fff3e0;
-    padding: 4px 10px;
-    border-radius: 4px;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    padding: 6px 12px;
+    border-radius: 20px;
     font-size: 14px;
     color: #f57c00;
-    font-weight: 500;
+    font-weight: 600;
     white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(245, 124, 0, 0.15);
 
     i {
       color: #ffb300;
@@ -153,7 +181,7 @@
   }
 }
 
-// Car Overview Cards
+// Car Overview Cards - Ultra Modern Design
 .carOverview {
   .carOverviewCard {
     border: 1px solid #f0f0f0;
@@ -167,14 +195,41 @@
     flex-direction: column;
     padding: 8px 5px;
     margin: 5px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-    background: #fafafa;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        135deg,
+        rgba(220, 184, 122, 0.05) 0%,
+        rgba(202, 164, 105, 0.05) 100%
+      );
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
 
     &:hover {
       border-color: #dcb87a;
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(220, 184, 122, 0.2);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    h3 {
+      position: relative;
+      z-index: 1;
     }
 
     p {
@@ -182,16 +237,33 @@
       color: #7b7b7b;
       font-weight: 500;
       margin: 0;
+      position: relative;
+      z-index: 1;
 
       a.car-detail-link {
-        color: #007bff;
+        color: #dcb87a;
         text-decoration: none;
-        transition: color 0.2s ease;
-        font-weight: 500;
+        transition: all 0.2s ease;
+        font-weight: 600;
+        position: relative;
+
+        &::after {
+          content: "";
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #dcb87a, #caa469);
+          transition: width 0.3s ease;
+        }
 
         &:hover {
-          color: #0056b3;
-          text-decoration: underline;
+          color: #caa469;
+
+          &::after {
+            width: 100%;
+          }
         }
 
         &:focus {
@@ -206,6 +278,9 @@
       height: 35px;
       border-radius: 50%;
       border: 2px solid #e0e0e0;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
   }
 }
@@ -218,13 +293,14 @@
   }
 }
 
-// Pricing Section
+// Pricing Section - Modern Enhanced
 .price {
   .price-value {
     font-size: 20px;
     font-weight: 700;
     color: #2e7d32;
     margin: 0;
+    text-shadow: 0 1px 2px rgba(46, 125, 50, 0.1);
 
     @media (max-width: 768px) {
       font-size: 18px;
@@ -248,11 +324,18 @@
   }
 }
 
-// Features Messages
+// Features Messages - Enhanced
 .message {
   .feature-item {
     font-size: 13px;
     color: #666;
+    padding: 4px 0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: #333;
+      transform: translateX(2px);
+    }
 
     p {
       margin: 0;
@@ -262,29 +345,61 @@
     img {
       width: 16px;
       height: 16px;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
     }
   }
 }
 
-// Action Buttons
+// Action Buttons - Ultra Modern with Ripple Effect
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 12px;
-  border-radius: 6px;
+  padding: 12px 16px;
+  border-radius: 12px;
   text-decoration: none;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+  }
+
+  &:hover::before {
+    width: 300px;
+    height: 300px;
+  }
 
   i {
     font-size: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
   }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 
   &:focus {
@@ -294,50 +409,50 @@
 }
 
 .whatsapp {
-  background: #25d366;
+  background: linear-gradient(135deg, #25d366 0%, #20ba5a 100%);
   color: #fff;
 
   &:hover {
-    background: #128c7e;
+    background: linear-gradient(135deg, #20ba5a 0%, #128c7e 100%);
   }
 }
 
 .call_us {
-  background: #007bff;
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: #fff;
 
   &:hover {
-    background: #0056b3;
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
   }
 }
 
 .share {
-  background: #6c757d;
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
   color: #fff;
 
   &:hover {
-    background: #545b62;
+    background: linear-gradient(135deg, #545b62 0%, #3d4349 100%);
   }
 }
 
-// Gallery Styles
+// Gallery Styles - Enhanced Modern
 .product_details {
   border: 1px solid #d0d0d0;
-  border-radius: 6px;
+  border-radius: 12px;
   overflow: hidden;
 
   .gallery-item-wrapper {
     position: relative;
     cursor: pointer;
     overflow: hidden;
-    border-radius: 7px;
+    border-radius: 12px;
 
     img {
-      transition: transform 0.3s ease;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     &:hover img {
-      transform: scale(1.05);
+      transform: scale(1.08);
     }
 
     &:hover .image-overlay {
@@ -351,7 +466,11 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
     display: flex;
     align-items: center;
     justify-content: center;
@@ -360,14 +479,15 @@
 
     i {
       color: #fff;
-      font-size: 32px;
+      font-size: 36px;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
     }
   }
 
   ::ng-deep .p-galleria .p-galleria-thumbnail-container {
     padding: 10px 0;
-    border-bottom-left-radius: 8px;
-    border-bottom-right-radius: 8px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
     background: transparent;
   }
 
@@ -387,18 +507,21 @@
     margin: 0 10px !important;
     flex: none !important;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    overflow: hidden;
 
     &:hover {
-      transform: scale(1.05);
+      transform: scale(1.08);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
   }
 
   ::ng-deep .p-galleria-item {
-    border-top-left-radius: 7px;
+    border-top-left-radius: 12px;
     background: transparent;
     padding: 10px 10px 0 10px;
-    border-top-right-radius: 7px;
+    border-top-right-radius: 12px;
   }
 
   ::ng-deep p-image,
@@ -408,7 +531,7 @@
 
   ::ng-deep .p-galleria-item img {
     width: 100%;
-    border-radius: 7px;
+    border-radius: 12px;
     height: 513px;
     display: block;
     object-fit: cover;
@@ -423,38 +546,41 @@
   }
 }
 
-// Full Screen Gallery
+// Full Screen Gallery - Ultra Modern with Glassmorphism
 .fullscreen-gallery {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.95);
+  background: rgba(0, 0, 0, 0.96);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(10px);
 
   .close-btn {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
-    width: 45px;
-    height: 45px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     font-size: 24px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10001;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: rotate(90deg);
+      background: rgba(220, 184, 122, 0.3);
+      border-color: rgba(220, 184, 122, 0.5);
+      transform: rotate(90deg) scale(1.1);
     }
 
     &:focus {
@@ -467,20 +593,22 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
-    font-size: 20px;
+    font-size: 22px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10001;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
-      transform: translateY(-50%) scale(1.1);
+      background: rgba(220, 184, 122, 0.3);
+      border-color: rgba(220, 184, 122, 0.5);
+      transform: translateY(-50%) scale(1.15);
     }
 
     &:focus {
@@ -509,21 +637,24 @@
       max-width: 100%;
       max-height: 80vh;
       object-fit: contain;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
     }
 
     .image-counter {
       position: absolute;
-      bottom: -40px;
+      bottom: -50px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      padding: 8px 16px;
-      border-radius: 20px;
+      padding: 10px 20px;
+      border-radius: 24px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
   }
 
@@ -533,34 +664,48 @@
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 8px;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     max-width: 90vw;
     overflow-x: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 
     &::-webkit-scrollbar {
-      height: 4px;
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
     }
 
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 2px;
+      background: rgba(220, 184, 122, 0.5);
+      border-radius: 3px;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: rgba(220, 184, 122, 0.7);
+      }
     }
 
     img {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       object-fit: cover;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
       opacity: 0.5;
-      transition: all 0.3s ease;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       border: 2px solid transparent;
 
       &:hover {
         opacity: 0.8;
+        transform: scale(1.05);
       }
 
       &:focus {
@@ -571,7 +716,8 @@
       &.active {
         opacity: 1;
         border-color: #dcb87a;
-        transform: scale(1.1);
+        transform: scale(1.15);
+        box-shadow: 0 4px 12px rgba(220, 184, 122, 0.4);
       }
     }
   }
@@ -662,16 +808,16 @@
 
   .fullscreen-gallery {
     .nav-btn {
-      width: 40px;
-      height: 40px;
-      font-size: 16px;
+      width: 45px;
+      height: 45px;
+      font-size: 18px;
 
       &.prev-btn {
-        left: 10px;
+        left: 15px;
       }
 
       &.next-btn {
-        right: 10px;
+        right: 15px;
       }
     }
   }
@@ -686,11 +832,11 @@
 
   .fullscreen-gallery {
     .close-btn {
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       font-size: 20px;
-      top: 10px;
-      right: 10px;
+      top: 15px;
+      right: 15px;
     }
 
     .thumbnail-strip {
@@ -698,7 +844,7 @@
     }
 
     .fullscreen-image-container .image-counter {
-      bottom: 10px;
+      bottom: 15px;
     }
   }
 }
@@ -714,6 +860,11 @@
 
   .section-title {
     font-size: 16px;
+  }
+
+  .description-header .read-more-btn {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 }
 

@@ -63,19 +63,35 @@
       }
 
       .sale {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-        color: #fff;
-        border-top-left-radius: 12px;
-        border-bottom-right-radius: 8px;
-        padding: 8px 14px;
+        position: absolute;
+        /* override bootstrap utility (.top-0/.start-0) which uses !important */
+        top: 20px !important;
+        left: 12px !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
         font-size: 12px;
         font-weight: 700;
-        letter-spacing: 0.5px;
-        z-index: 111;
-        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
-        text-transform: uppercase;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(2px);
+        line-height: 1;
+        color: #fff;
+        background: linear-gradient(
+          90deg,
+          rgba(220, 184, 122, 0.95),
+          rgba(219, 153, 60, 0.9)
+        );
+        border-radius: 999px;
+        box-shadow: 0 6px 18px rgba(220, 184, 122, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        z-index: 120;
+        text-transform: none;
+        backdrop-filter: blur(6px) saturate(120%);
+        -webkit-backdrop-filter: blur(6px) saturate(120%);
+
+        i {
+          font-size: 11px;
+          opacity: 0.95;
+        }
       }
     }
   }
@@ -85,19 +101,30 @@
   }
 
   .deposit {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    color: #fff;
-    border-top-right-radius: 12px;
-    border-bottom-left-radius: 8px;
-    padding: 8px 14px;
+    position: absolute;
+    /* override bootstrap utility (.top-0/.end-0) which uses !important */
+    top: 20px !important;
+    right: 12px !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    z-index: 111;
-    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
-    text-transform: uppercase;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    backdrop-filter: blur(2px);
+    line-height: 1;
+    color: #fff;
+    background: linear-gradient(
+      90deg,
+      rgba(34, 197, 94, 0.95),
+      rgba(16, 185, 129, 0.9)
+    );
+    border-radius: 999px;
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 120;
+    text-transform: none;
+    backdrop-filter: blur(6px) saturate(120%);
+    -webkit-backdrop-filter: blur(6px) saturate(120%);
   }
 
   .title {
@@ -217,12 +244,21 @@
       gap: 6px;
       flex-wrap: wrap;
 
+      .current-price {
+        /* make the current/real price stand out in red */
+        color: #d95e07;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
       .old_price {
-        color: #d32f2f;
+        /* old price subdued in gray */
+        color: #757575;
         font-size: 13px;
-        font-weight: 500;
+        font-weight: 600;
         text-decoration: line-through;
-        opacity: 0.7;
+        opacity: 0.9;
       }
 
       span {
@@ -454,30 +490,40 @@
   .product-swiper {
     position: relative;
 
+    /* hide default swiper bullets since we use a custom pagination */
+    .swiper-pagination {
+      display: none !important;
+    }
+
     .swiper-pagination {
       bottom: 25px !important;
       z-index: 10;
 
       .swiper-pagination-bullet {
-        width: 10px;
-        height: 10px;
-        background: rgba(255, 255, 255, 0.6);
+        /* small rectangular bars */
+        width: 22px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.7);
         opacity: 1;
-        margin: 0 5px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: 0 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-block;
 
         &-active {
           background: #dcb87a;
           border-color: #dcb87a;
-          transform: scale(1.3);
-          width: 24px;
-          border-radius: 10px;
+          transform: scaleX(1.2) scaleY(1.05);
+          box-shadow: 0 6px 18px rgba(220, 184, 122, 0.12);
+          width: 28px;
+          height: 7px;
+          border-radius: 6px;
         }
 
         &:hover {
-          background: rgba(220, 184, 122, 0.7);
-          transform: scale(1.15);
+          background: rgba(220, 184, 122, 0.85);
+          transform: scaleX(1.05);
         }
       }
     }
@@ -488,16 +534,70 @@
   margin: 0;
 }
 
-::ng-deep .swiper-pagination-bullet-active {
-  background-color: #dcb87a !important;
-  width: 24px;
-  border-radius: 20px;
+/* Custom pagination styling */
+.custom-pagination {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 130;
+  pointer-events: auto;
 }
 
+.custom-pagination-viewport {
+  overflow: hidden;
+  width: 160px; /* enough for 4 small bars; adjust if maxVisibleDots changes */
+}
+
+.custom-pagination-list {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s ease;
+}
+
+.custom-dot {
+  display: inline-block;
+  width: 22px;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  transition: all 0.18s ease;
+  cursor: pointer;
+  padding: 0;
+}
+
+.custom-dot:hover {
+  transform: scaleX(1.08);
+  background: rgba(220, 184, 122, 0.88);
+}
+
+.custom-dot.active {
+  background: #dcb87a;
+  width: 28px;
+  height: 7px;
+  box-shadow: 0 8px 20px rgba(220, 184, 122, 0.12);
+}
+
+/* Scoped fallback for other swiper instances: keep rectangular style */
 ::ng-deep .swiper-pagination-bullet {
-  background: rgba(255, 255, 255, 0.7);
-  opacity: 1;
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.7) !important;
+  opacity: 1 !important;
+  width: 22px !important;
+  height: 6px !important;
+  border-radius: 4px !important;
+  transition: all 0.22s ease !important;
+  margin: 0 6px !important;
+}
+
+::ng-deep .swiper-pagination-bullet-active {
+  background-color: #dcb87a !important;
+  width: 28px !important;
+  height: 7px !important;
+  border-radius: 6px !important;
+  box-shadow: 0 6px 18px rgba(220, 184, 122, 0.12) !important;
 }
 
 // Responsive Design
