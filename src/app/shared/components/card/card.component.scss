@@ -1,0 +1,562 @@
+// Modern Enhanced Card Styles
+::ng-deep .card_product .p-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  max-width: 340px !important;
+  background: #fff;
+  position: relative;
+
+  &:hover {
+    border: 1px solid #dcb87a;
+    box-shadow: 0 12px 40px rgba(220, 184, 122, 0.15);
+    transform: translateY(-8px);
+  }
+
+  .p-card-header {
+    width: 100%;
+    overflow: hidden;
+
+    .img_card {
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
+      width: 100%;
+      height: 240px;
+      display: block;
+      margin: auto;
+      overflow: hidden;
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      &:hover::after {
+        opacity: 1;
+      }
+
+      img {
+        width: auto;
+        height: auto;
+        height: 240px !important;
+        max-width: 100%;
+        display: block;
+        margin: auto;
+        object-fit: cover;
+        object-position: center;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      &:hover img {
+        transform: scale(1.08);
+      }
+
+      .sale {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+        color: #fff;
+        border-top-left-radius: 12px;
+        border-bottom-right-radius: 8px;
+        padding: 8px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        z-index: 111;
+        box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+        text-transform: uppercase;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(2px);
+      }
+    }
+  }
+
+  .p-card-content {
+    padding: 0;
+  }
+
+  .deposit {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #fff;
+    border-top-right-radius: 12px;
+    border-bottom-left-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    z-index: 111;
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+    text-transform: uppercase;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(2px);
+  }
+
+  .title {
+    a {
+      text-decoration: none;
+      transition: all 0.3s ease;
+
+      &:hover h3 {
+        color: #dcb87a;
+      }
+    }
+
+    h3 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #1a1a1a;
+      width: fit-content;
+      letter-spacing: -0.3px;
+      line-height: 1.3;
+      transition: color 0.3s ease;
+    }
+
+    span {
+      color: #ffbc03;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+
+      i {
+        font-size: 14px;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover i {
+        transform: scale(1.1) rotate(5deg);
+      }
+    }
+  }
+
+  .car_details {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 10px 12px;
+    gap: 16px;
+    transition: background 0.3s ease;
+
+    &:hover {
+      background: #f0f1f3;
+    }
+
+    div {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: transform 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+    }
+
+    span {
+      color: #5a5a5a;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    i {
+      color: #dcb87a;
+      font-size: 15px;
+    }
+
+    img {
+      width: 16px;
+      height: 16px;
+      opacity: 0.8;
+      transition: opacity 0.3s ease;
+      filter: brightness(0.7);
+    }
+
+    div:hover img {
+      opacity: 1;
+    }
+  }
+
+  .price {
+    margin-bottom: 10px;
+
+    .row {
+      gap: 8px;
+    }
+
+    .day,
+    .month {
+      background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+      border-radius: 8px;
+      padding: 8px 12px;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+
+      &:hover {
+        background: linear-gradient(135deg, #fff5e6 0%, #fff0d6 100%);
+        border: 1px solid #dcb87a;
+        transform: translateX(3px);
+      }
+    }
+
+    p {
+      color: #1a1a1a;
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+
+      .old_price {
+        color: #d32f2f;
+        font-size: 13px;
+        font-weight: 500;
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+
+      span {
+        color: #757575;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+
+    .day p {
+      color: #dcb87a;
+    }
+
+    .month p {
+      color: #5a5a5a;
+    }
+
+    i {
+      font-size: 11px;
+      color: #dcb87a;
+    }
+  }
+
+  hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+    margin: 12px 0;
+  }
+
+  .message {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 75px;
+
+    .col-12 > div {
+      transition: all 0.3s ease;
+      padding: 4px 0;
+      border-radius: 6px;
+
+      &:hover {
+        background: #f8f9fa;
+        padding-left: 8px;
+      }
+    }
+
+    img {
+      width: 18px;
+      height: 18px;
+      transition: transform 0.3s ease;
+    }
+
+    div:hover img {
+      transform: scale(1.15);
+    }
+
+    i {
+      color: #dcb87a;
+      font-size: 16px;
+      transition: transform 0.3s ease;
+    }
+
+    div:hover i {
+      transform: scale(1.15);
+    }
+
+    p {
+      color: #424242;
+      font-size: 13px;
+      font-weight: 600;
+      margin: 0;
+    }
+  }
+
+  .p-card .p-card-body {
+    padding: 16px 18px !important;
+  }
+
+  .p-card-footer {
+    padding: 0px;
+    background: #fafafa;
+
+    .row {
+      margin: 0;
+    }
+
+    .whatsapp,
+    .call_us,
+    .share {
+      width: 100%;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 10px 12px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.32s ease, background 0.32s ease;
+      position: relative;
+      overflow: hidden;
+      will-change: transform, box-shadow;
+
+      /* subtle ripple effect using scale instead of width/height for smoother animation */
+      &::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.14);
+        transform: translate(-50%, -50%) scale(0);
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+          opacity 0.35s ease;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      &:hover::before {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 1;
+      }
+
+      i,
+      span {
+        position: relative;
+        z-index: 1;
+        transition: transform 0.32s ease;
+      }
+
+      &:hover {
+        transform: translateY(-3px) scale(1.02);
+      }
+
+      &:active {
+        transform: translateY(0) scale(0.99);
+      }
+
+      &:focus {
+        outline: none;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12),
+          0 0 0 4px rgba(220, 184, 122, 0.12);
+      }
+    }
+
+    .whatsapp {
+      background: linear-gradient(135deg, #22c55e 0%, #128c7e 100%);
+      color: #fff;
+      box-shadow: 0 6px 18px rgba(34, 197, 94, 0.12),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.06);
+
+      &:hover {
+        background: linear-gradient(135deg, #29d977 0%, #0fb092 100%);
+        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.18);
+      }
+    }
+
+    .call_us {
+      background: linear-gradient(135deg, #dcb87a 0%, #c9a560 100%);
+      color: #1a1a1a;
+      box-shadow: 0 6px 18px rgba(220, 184, 122, 0.12),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.04);
+
+      &:hover {
+        background: linear-gradient(135deg, #e5c589 0%, #d4b06f 100%);
+        box-shadow: 0 10px 30px rgba(220, 184, 122, 0.18);
+      }
+    }
+
+    .share {
+      background: #fff;
+      color: #dcb87a;
+      border: 2px solid rgba(220, 184, 122, 0.18);
+      font-size: 16px;
+      padding: 8px;
+      box-shadow: 0 6px 18px rgba(220, 184, 122, 0.06);
+
+      &:hover {
+        background: rgba(220, 184, 122, 0.95);
+        color: #fff;
+        box-shadow: 0 10px 30px rgba(220, 184, 122, 0.2);
+        transform: translateY(-3px) rotate(3deg) scale(1.02);
+      }
+    }
+  }
+}
+
+// Swiper Enhancements
+.media-container {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  position: relative;
+  background: #f5f5f5;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  video {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 1;
+  }
+
+  .video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+}
+
+::ng-deep {
+  .product-swiper {
+    position: relative;
+
+    .swiper-pagination {
+      bottom: 25px !important;
+      z-index: 10;
+
+      .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.6);
+        opacity: 1;
+        margin: 0 5px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &-active {
+          background: #dcb87a;
+          border-color: #dcb87a;
+          transform: scale(1.3);
+          width: 24px;
+          border-radius: 10px;
+        }
+
+        &:hover {
+          background: rgba(220, 184, 122, 0.7);
+          transform: scale(1.15);
+        }
+      }
+    }
+  }
+}
+
+.swiper {
+  margin: 0;
+}
+
+::ng-deep .swiper-pagination-bullet-active {
+  background-color: #dcb87a !important;
+  width: 24px;
+  border-radius: 20px;
+}
+
+::ng-deep .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.7);
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+// Responsive Design
+@media only screen and (max-width: 1199px) {
+  ::ng-deep .p-card {
+    width: auto;
+  }
+
+  ::ng-deep .p-card .p-card-body {
+    padding: 12px 14px !important;
+  }
+
+  ::ng-deep .card_product .p-card .title h3 {
+    font-size: 17px;
+  }
+
+  ::ng-deep .card_product .p-card .car_details span {
+    font-size: 12px;
+  }
+
+  ::ng-deep .card_product .p-card .price p {
+    font-size: 15px;
+  }
+
+  ::ng-deep .card_product .p-card .price p .old_price {
+    font-size: 12px;
+  }
+
+  ::ng-deep .card_product .p-card .message p {
+    font-size: 12px;
+  }
+
+  ::ng-deep .card_product .p-card .p-card-footer .whatsapp,
+  ::ng-deep .card_product .p-card .p-card-footer .call_us {
+    font-size: 12px;
+    padding: 9px 6px;
+  }
+
+  ::ng-deep .card_product .p-card .p-card-footer .share {
+    font-size: 16px;
+  }
+
+  ::ng-deep .card_product .p-card .p-card-footer .row {
+    padding: 0 10px;
+  }
+}
+
+// Animation for card entrance
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::ng-deep .card_product .p-card {
+  animation: fadeInUp 0.5s ease-out;
+}

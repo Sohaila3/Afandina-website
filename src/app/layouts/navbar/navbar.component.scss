@@ -1,0 +1,451 @@
+nav {
+  // position: relative;
+  z-index: 999;
+  ul {
+    padding: 10px;
+    text-transform: capitalize;
+    li {
+      text-transform: capitalize;
+      margin: 10px;
+      a,
+      button {
+        font-size: 18px;
+        font-weight: 400;
+        transition: all 0.3s linear;
+      }
+      a:hover,
+      button:hover {
+        color: #e2c38d !important;
+      }
+    }
+  }
+}
+.absolute-position {
+  position: absolute;
+  width: 100%;
+  padding: 0;
+  ul li a,
+  button {
+    color: #fff !important;
+  }
+}
+
+.relative-position {
+  position: relative;
+  padding: 0;
+  ul li a,
+  button {
+    color: #171717 !important;
+  }
+}
+.fa-magnifying-glass {
+  font-size: 18px;
+  color: #fff;
+}
+@media (max-width: 991px) {
+  nav {
+    position: relative;
+    background: #171717 !important;
+  }
+  .navbar-brand {
+    order: 2;
+  }
+}
+
+nav .searchResults {
+  display: none !important;
+}
+.navbar .ar {
+  margin-right: auto;
+}
+.navbar .en {
+  margin-left: auto;
+}
+.navbar-toggler:focus {
+  border: 0;
+  outline: none;
+}
+.brand-menu,
+.category-menu {
+  text-transform: capitalize;
+  display: none;
+  position: absolute;
+  top: 55px;
+  left: 10%;
+  background-color: #fff;
+  z-index: 1000;
+  width: 80%;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  margin: auto;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.category-menu.show,
+.brand-menu.show {
+  display: block !important;
+}
+.brand-button,
+.category-button {
+  text-transform: capitalize;
+  color: white;
+  cursor: pointer;
+}
+
+.nav-item {
+  transition: all 0.3s linear;
+}
+
+.brands,
+.Categories {
+  a {
+    text-transform: capitalize;
+    text-decoration: none;
+  }
+  .contnet {
+    border: 1px solid #e6e6e6;
+    border-radius: 10px;
+    transition: all 0.3s linear;
+    height: 70px;
+    margin-bottom: 1rem;
+
+    h3 {
+      color: #827464;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    p {
+      color: #848484;
+      font-size: 12px;
+      font-weight: 500;
+    }
+  }
+  .contnet:hover {
+    background: #e1ddd7;
+  }
+}
+
+.brands img {
+  max-width: 50px;
+  width: auto;
+  height: 50px;
+  object-fit: contain;
+}
+
+.Categories img {
+  max-width: 90px;
+  max-height: 50px;
+  object-fit: contain;
+}
+
+.navbar-toggler {
+  width: 50px;
+  height: 40px;
+  border: 0;
+  span {
+    width: 100%;
+    height: 2px;
+    display: block;
+    background: #e2c38d;
+    margin: 6px 0;
+  }
+}
+.absolute-position ul li a,
+.absolute-position button {
+  color: #fff;
+}
+.category-dropdown,
+.brand-dropdown {
+  transition: all 0.3s linear;
+}
+@media only screen and (min-width: 1199px) {
+  .search,
+  .language {
+    display: none;
+  }
+}
+@media only screen and (max-width: 1199px) {
+  .search {
+    width: 100%;
+  }
+  nav .searchResults {
+    display: block;
+  }
+  .brand-menu.show {
+    display: block;
+  }
+
+  .show {
+    display: block !important;
+  }
+
+  .navbar-collapse {
+    background: #fff;
+    border-radius: 12px;
+    position: absolute;
+    width: 100%;
+    top: 80px;
+    z-index: 11;
+    left: 0;
+    ul li a,
+    ul li button {
+      color: #000 !important;
+    }
+    // Reserve space for menu items
+    min-height: 50px;
+    contain: layout style;
+
+    // Prevent content jumps during font load
+    .nav-item {
+      min-width: 80px; // Minimum width for menu items
+      text-align: center;
+
+      // Use system font as fallback
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+    }
+  }
+  .brand-menu,
+  .category-menu {
+    display: none;
+    top: 60px;
+    left: 10%;
+    z-index: 1000;
+    width: 100%;
+    box-shadow: none;
+    margin: auto;
+    border-radius: 0;
+    padding: 0;
+    position: unset !important;
+    padding: 0 12px;
+    overflow-x: hidden;
+    height: 300px;
+  }
+  nav ul li {
+    margin: 0px 10px;
+  }
+}
+
+.dropdown {
+  min-width: 60px;
+  text-align: center;
+}
+
+::ng-deep .p-dialog {
+  height: 450px;
+  .search_bar {
+    position: relative;
+
+    ul {
+      position: absolute;
+      width: 400px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      background-color: #ffffff;
+      height: auto;
+      margin-top: 6px;
+      z-index: 1111;
+      padding: 10px;
+      max-height: 300px;
+      right: 0;
+      overflow: hidden;
+      overflow-y: auto;
+      max-width: 100%;
+
+      h2 {
+        color: #171717;
+        font-size: 18px;
+      }
+
+      li {
+        list-style: none;
+        padding: 3px;
+        font-size: 14px;
+        font-weight: 400;
+        color: #000000;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin: 0;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        padding: 7px;
+        height: 50px;
+
+        a {
+          display: flex;
+          align-items: center;
+          justify-content: flex-start;
+          text-decoration: none;
+          transition: all 0.3s linear;
+        }
+      }
+
+      li:hover {
+        background: rgb(229, 182, 76);
+        color: #fff !important;
+      }
+
+      span,
+      p {
+        color: #3d4852;
+        font-size: 14px;
+        font-weight: 400;
+        margin: 0 10px;
+      }
+
+      a {
+        color: #2b9947;
+        font-size: 12px;
+        font-weight: 500;
+      }
+    }
+
+    .input_group {
+      background-color: #ffffff;
+      border: 1px solid #a3a3a3;
+      border-radius: 15px;
+      height: 43px;
+
+      input {
+        background: transparent;
+        border: 0;
+        outline: none;
+        height: 100%;
+        padding: 0 10px;
+      }
+
+      button {
+        color: #ffffff;
+        height: 100%;
+        border: 0;
+        outline: none;
+        padding: 0 20px;
+        background: linear-gradient(90deg, #00a19a 0%, #35c865 101.49%);
+      }
+
+      .border_left {
+        border-bottom-left-radius: 12px !important;
+        border-top-left-radius: 12px !important;
+      }
+
+      .border_right {
+        border-bottom-right-radius: 12px !important;
+        border-top-right-radius: 12px !important;
+      }
+
+      .search_icon {
+        background: transparent !important;
+        cursor: pointer;
+
+        i {
+          color: #09152c;
+        }
+      }
+    }
+  }
+}
+
+.input-group {
+  max-width: 400px;
+  margin-left: auto;
+  input {
+    border: 1px solid #dcb87ab0;
+    background: rgba(220, 184, 122, 0.06);
+    color: #dcb87ade;
+  }
+  input:focus {
+    box-shadow: none;
+  }
+  input::placeholder {
+    color: #dcb87ade;
+  }
+  button {
+    background: #dcb87a;
+    color: #171717;
+    font-size: 16px;
+    border: 1px solid #dcb87a;
+  }
+}
+
+// .ar {
+//     right: 0 !important;
+//     left: auto;
+//     text-align: right;
+// }
+
+// .en {
+//     left: 0 !important;
+//     right: auto;
+//     text-align: left;
+// }
+
+@media only screen and (max-width: 500px) {
+  .ar {
+    left: 0 !important;
+    right: auto;
+    text-align: right;
+  }
+
+  .en {
+    right: 0 !important;
+    left: auto;
+    text-align: left;
+  }
+}
+
+/* Modern scroll/compact navbar styles */
+nav {
+  transition: background 0.25s ease, padding 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* When the page is scrolled we apply a compact, slightly opaque background and shadow */
+nav.scrolled {
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(217, 185, 155, 0.95);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(217, 185, 155, 0.08);
+  padding: 6px 0;
+  z-index: 9999;
+}
+
+/* Dark-mode support when nav was previously absolute atop a dark hero */
+.absolute-position.scrolled {
+  background: rgba(217, 185, 155, 0.95);
+}
+
+/* Make links darker on scrolled state for contrast */
+nav.scrolled ul li a,
+nav.scrolled ul li button {
+  color: #fff !important;
+}
+
+/* Shrink logo smoothly when scrolled */
+.navbar-brand img {
+  transition: width 0.25s ease, height 0.25s ease, transform 0.25s ease;
+}
+nav.scrolled .navbar-brand img {
+  width: 48px !important;
+  height: 48px !important;
+  transform: translateY(-2px);
+}
+
+/* Toggler and icons color in scrolled state */
+nav.scrolled .navbar-toggler span {
+  background: #fff;
+}
+
+/* Ensure collapse menu content still readable when fixed */
+nav.scrolled .navbar-collapse {
+  background: transparent;
+}
+
+@media (max-width: 991px) {
+  nav.scrolled {
+    position: fixed;
+  }
+}

@@ -1,0 +1,227 @@
+<p-card [style]="{ width: '97%' }" class="card_product">
+  <ng-template pTemplate="header">
+    <div class="position-relative img_card">
+      <swiper
+        [spaceBetween]="10"
+        [slidesPerView]="1"
+        [pagination]="{
+          clickable: true,
+          type: 'bullets',
+          dynamicBullets: true
+        }"
+        [loop]="true"
+        [autoplay]="false"
+        [effect]="'slide'"
+        [navigation]="false"
+        class="product-swiper"
+      >
+        <ng-template swiperSlide *ngFor="let image of carData.images">
+          <ng-container [ngSwitch]="image.type">
+            <!-- Image Template -->
+            <div *ngSwitchCase="'image'" class="media-container">
+              <a
+                class="w-100 h-100"
+                [routerLink]="['/', currentLang, 'product', carData.slug]"
+                [title]="carData.name"
+              >
+                <img
+                  [src]="
+                    'https://admin.afandinacarrental.com/storage/' +
+                    image.thumbnail_path
+                  "
+                  [alt]="carData.name + ' - ' + carData.category_name"
+                  [title]="carData.name + ' - ' + carData.category_name"
+                  style="width: 100%; height: 100%; object-fit: cover"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+            <!-- Video Template -->
+            <div *ngSwitchCase="'video'" class="media-container">
+              <div class="video-overlay"></div>
+              <video
+                controls
+                [poster]="carData.thumbnail_image"
+                style="width: 100%; height: 100%; object-fit: cover"
+                controlsList="nodownload"
+                disablePictureInPicture
+                (dragstart)="$event.preventDefault()"
+                [attr.draggable]="false"
+              >
+                <source
+                  [src]="
+                    'https://admin.afandinacarrental.com/storage/' +
+                    image.file_path
+                  "
+                  type="video/mp4"
+                />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </ng-container>
+        </ng-template>
+      </swiper>
+      <span
+        class="position-absolute top-0 start-0 sale"
+        *ngIf="carData.discount_rate != '.' && carData.discount_rate != '0'"
+        >{{ carData.discount_rate }}% {{ translations["sale"] }}</span
+      >
+      <span
+        class="position-absolute top-0 end-0 deposit"
+        *ngIf="carData.no_deposit == '1' || carData.no_deposit == '١'"
+        >{{ translations["no_deposit"] }}
+      </span>
+    </div>
+  </ng-template>
+
+  <div class="d-flex align-items-center justify-content-between title mb-2">
+    <a
+      [routerLink]="['/', currentLang, 'product', carData.slug]"
+      [title]="carData.name"
+    >
+      <h3 class="m-0 ellipse one-lines" [title]="carData.name">
+        {{ carData.name.split(" ").slice(0, 3).join(" ") }}
+      </h3>
+    </a>
+  </div>
+
+  <div class="d-flex align-items-center car_details mb-2">
+    <div>
+      <i class="fa-solid fa-user"></i>
+      <span>{{ carData.passenger_capacity }}</span>
+    </div>
+    <div>
+      <img
+        src="../../../../assets/images/icon/Window.svg"
+        [alt]="'Door Count Icon'"
+        [title]="'Door Count: ' + carData.door_count"
+      />
+      <span>{{ carData.door_count }}</span>
+    </div>
+    <div>
+      <img
+        src="../../../../assets/images/icon/car.svg"
+        [alt]="'Car Category Icon'"
+        [title]="'Category: ' + carData.category_name"
+      />
+      <span>{{ carData.category_name }}</span>
+    </div>
+  </div>
+
+  <div class="price mb-2">
+    <div class="row">
+      <div class="col-12 mb-2">
+        <div class="day d-flex align-items-center justify-content-between">
+          <p class="m-0">
+            <span class="current-price">{{
+              carData.daily_discount_price
+            }}</span>
+            <span
+              class="old_price"
+              *ngIf="carData.daily_main_price != carData.daily_discount_price"
+            >
+              {{ carData.daily_main_price }}
+            </span>
+            <span class="currency">
+              {{ carData.currency.name }} / {{ translations["per_day"] }}
+            </span>
+          </p>
+          <span
+            class="mileage-badge"
+            *ngIf="carData.daily_mileage_included != null"
+          >
+            <i class="fa-solid fa-road"></i>
+            {{ carData.daily_mileage_included ?? "-" }} {{ translations["km"] }}
+          </span>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="month d-flex align-items-center justify-content-between">
+          <p class="m-0">
+            <span class="current-price">{{
+              carData.monthly_discount_price
+            }}</span>
+            <span
+              class="old_price"
+              *ngIf="
+                carData.monthly_main_price != carData.monthly_discount_price
+              "
+            >
+              {{ carData.monthly_main_price }}
+            </span>
+            <span class="currency">
+              {{ carData.currency.name }} / {{ translations["per_month"] }}
+            </span>
+          </p>
+          <span
+            class="mileage-badge"
+            *ngIf="carData.monthly_mileage_included != null"
+          >
+            <i class="fa-solid fa-road"></i>
+            {{ carData.monthly_mileage_included ?? "-" }}
+            {{ translations["km"] }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="m-0 mb-2" />
+
+  <div class="message row mb-2">
+    <div class="col-12" *ngIf="carData.free_delivery == '1'">
+      <div class="d-flex align-items-center mb-2">
+        <img
+          src="../../../../assets/images/icon/check.svg"
+          [alt]="'Free Delivery Icon'"
+          [title]="translations['free_delivery']"
+        />
+        <p class="mx-2 mb-0">{{ translations["free_delivery"] }}</p>
+      </div>
+    </div>
+    <div class="col-12" *ngIf="carData.insurance_included == '1'">
+      <div class="d-flex align-items-center mb-2">
+        <img
+          src="../../../../assets/images/icon/check.svg"
+          [alt]="'Insurance Included Icon'"
+          [title]="translations['insurance_included']"
+        />
+        <p class="mx-2 mb-0">{{ translations["insurance_included"] }}</p>
+      </div>
+    </div>
+    <div class="col-12" *ngIf="carData.crypto_payment_accepted == '1'">
+      <div class="d-flex align-items-center mb-2">
+        <i class="fa-solid fa-bitcoin-sign"></i>
+        <p class="mx-2 mb-0">{{ translations["crypto_payment_accepted"] }}</p>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="row px-2 py-2">
+      <div class="col-6 p-1">
+        <a
+          [href]="whatsappUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="whatsapp"
+          [title]="translations['whatsapp']"
+        >
+          <i class="fa-brands fa-whatsapp"></i>
+          <span>{{ translations["whatsapp"] }}</span>
+        </a>
+      </div>
+
+      <div class="col-6 p-1">
+        <a
+          [href]="'tel:' + contactData.phone"
+          class="call_us"
+          [title]="translations['call_us']"
+        >
+          <i class="fa-solid fa-phone"></i>
+          <span>{{ translations["call_us"] }}</span>
+        </a>
+      </div>
+    </div>
+  </ng-template>
+</p-card>
