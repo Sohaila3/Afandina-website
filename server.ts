@@ -51,7 +51,7 @@ export function app(): express.Express {
     })
   );
 
-  const distFolder = join(process.cwd(), 'dist/my-angular-project/browser');
+  const distFolder = join(__dirname, '../browser');
   const indexHtml = existsSync(join(distFolder, 'index.original.html'))
     ? 'index.original.html'
     : 'index';

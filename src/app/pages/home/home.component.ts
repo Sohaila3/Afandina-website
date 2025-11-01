@@ -308,40 +308,51 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
           media_type: mediaType,
           video_path: header?.hero_header_video_path,
           image_path: header?.hero_header_image_path,
-          title: header?.hero_header_title || 'Premium Car Rental',
+          title:
+            header?.hero_header_title ||
+            this.translations['premium_car_rental'] ||
+            'Premium Car Rental',
           description:
             header?.hero_header_description ||
+            this.translations['luxury_comfort'] ||
             'Luxury and comfort with our exclusive fleet',
-          badge: 'New',
+          badge: this.translations['new'] || 'New',
           show_cta: true,
           show_stats: true,
         },
         {
           id: 'slide-2',
           media_type: 'image',
-          image_path: '../../../assets/images/logo/car3.jpg',
-          title: 'Luxury Sedans & SUVs',
-          description: 'Drive premium vehicles at great rates',
-          badge: 'Best Sellers',
+          image_path: '/assets/images/logo/car3.webp',
+          title:
+            this.translations['luxury_sedans_suvs'] || 'Luxury Sedans & SUVs',
+          description:
+            this.translations['drive_premium_vehicles'] ||
+            'Drive premium vehicles at great rates',
+          badge: this.translations['best_sellers'] || 'Best Sellers',
           show_cta: true,
           show_stats: false,
         },
         {
           id: 'slide-3',
           media_type: 'image',
-          image_path: '../../../assets/images/logo/car1 (1).jpg',
-          description: 'Our team is here to help anytime',
-          badge: 'Reliable',
+          image_path: '/assets/images/logo/car1.webp',
+          description:
+            this.translations['team_help_anytime'] ||
+            'Our team is here to help anytime',
+          badge: this.translations['reliable'] || 'Reliable',
           show_cta: true,
           show_stats: false,
         },
         {
           id: 'slide-4',
           media_type: 'image',
-          image_path: '../../../assets/images/logo/car2.jpg',
-          title: 'Explore the City',
-          description: 'Discover the best spots with flexible rentals',
-          badge: 'Adventure',
+          image_path: '/assets/images/logo/car2.webp',
+          title: this.translations['explore_city'] || 'Explore the City',
+          description:
+            this.translations['discover_best_spots'] ||
+            'Discover the best spots with flexible rentals',
+          badge: this.translations['adventure'] || 'Adventure',
           show_cta: true,
           show_stats: false,
         },
@@ -614,6 +625,68 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       if (!this.translations['scroll_down']) {
         this.translations['scroll_down'] =
           this.currentLang === 'ar' ? 'مرر لأسفل' : 'Scroll Down';
+      }
+
+      // Hero Slides Translations
+      if (!this.translations['premium_car_rental']) {
+        this.translations['premium_car_rental'] =
+          this.currentLang === 'ar'
+            ? 'تأجير سيارات فاخر'
+            : 'Premium Car Rental';
+      }
+      if (!this.translations['luxury_comfort']) {
+        this.translations['luxury_comfort'] =
+          this.currentLang === 'ar'
+            ? 'الفخامة والراحة مع أسطولنا الحصري'
+            : 'Luxury and comfort with our exclusive fleet';
+      }
+      if (!this.translations['new']) {
+        this.translations['new'] = this.currentLang === 'ar' ? 'جديد' : 'New';
+      }
+      if (!this.translations['luxury_sedans_suvs']) {
+        this.translations['luxury_sedans_suvs'] =
+          this.currentLang === 'ar'
+            ? 'سيارات سيدان وSUV فاخرة'
+            : 'Luxury Sedans & SUVs';
+      }
+      if (!this.translations['drive_premium_vehicles']) {
+        this.translations['drive_premium_vehicles'] =
+          this.currentLang === 'ar'
+            ? 'قد سيارات فاخرة بأسعار مميزة'
+            : 'Drive premium vehicles at great rates';
+      }
+      if (!this.translations['best_sellers']) {
+        this.translations['best_sellers'] =
+          this.currentLang === 'ar' ? 'الأكثر مبيعاً' : 'Best Sellers';
+      }
+      if (!this.translations['team_help_anytime']) {
+        this.translations['team_help_anytime'] =
+          this.currentLang === 'ar'
+            ? 'فريقنا هنا لمساعدتك في أي وقت'
+            : 'Our team is here to help anytime';
+      }
+      if (!this.translations['reliable']) {
+        this.translations['reliable'] =
+          this.currentLang === 'ar' ? 'موثوق' : 'Reliable';
+      }
+      if (!this.translations['explore_city']) {
+        this.translations['explore_city'] =
+          this.currentLang === 'ar' ? 'استكشف المدينة' : 'Explore the City';
+      }
+      if (!this.translations['discover_best_spots']) {
+        this.translations['discover_best_spots'] =
+          this.currentLang === 'ar'
+            ? 'اكتشف أفضل الأماكن مع التأجير المرن'
+            : 'Discover the best spots with flexible rentals';
+      }
+      if (!this.translations['adventure']) {
+        this.translations['adventure'] =
+          this.currentLang === 'ar' ? 'مغامرة' : 'Adventure';
+      }
+
+      // Re-prepare hero slides with updated translations
+      if (this.headerSection) {
+        this.prepareHeroSlides();
       }
 
       // Instagram Section Translations

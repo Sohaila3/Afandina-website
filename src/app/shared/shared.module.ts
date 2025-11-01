@@ -12,6 +12,7 @@ import { GalleriaModule } from 'primeng/galleria';
 import { CurrencyComponent } from './components/currency/currency.component';
 import { SwiperModule } from 'swiper/angular';
 import { ScrollToTopComponent } from './components/scroll-to-top/scroll-to-top.component';
+import { AccordionModule } from 'primeng/accordion';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,7 @@ import { ScrollToTopComponent } from './components/scroll-to-top/scroll-to-top.c
     LanguageComponent,
     SearchComponent,
     CurrencyComponent,
-    ScrollToTopComponent
+    ScrollToTopComponent,
   ],
   imports: [
     CommonModule,
@@ -29,16 +30,21 @@ import { ScrollToTopComponent } from './components/scroll-to-top/scroll-to-top.c
     CarouselModule,
     RouterModule,
     GalleriaModule,
-    SwiperModule
+    SwiperModule,
+    AccordionModule,
   ],
   exports: [
+    CommonModule,
+    RouterModule,
+    SwiperModule,
+    AccordionModule,
     CardComponent,
     BannerHeadComponent,
     CardBlogComponent,
     LanguageComponent,
     SearchComponent,
     CurrencyComponent,
-    ScrollToTopComponent
+    ScrollToTopComponent,
   ],
 })
-export class SharedModule { }
+export class SharedModule {}

@@ -1,5 +1,5 @@
 nav {
-  // position: relative;
+  position: relative;
   z-index: 999;
   ul {
     padding: 10px;
@@ -7,6 +7,7 @@ nav {
     li {
       text-transform: capitalize;
       margin: 10px;
+      position: relative;
       a,
       button {
         font-size: 18px;
@@ -73,7 +74,7 @@ nav .searchResults {
   top: 55px;
   left: 10%;
   background-color: #fff;
-  z-index: 1000;
+  z-index: 998;
   width: 80%;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   margin: auto;
@@ -158,6 +159,20 @@ nav .searchResults {
 .brand-dropdown {
   transition: all 0.3s linear;
 }
+// Language and Currency dropdowns in navbar
+.language {
+  position: relative;
+  z-index: 1001;
+
+  ::ng-deep .dropdown {
+    z-index: 1001;
+  }
+
+  ::ng-deep .dropdown-menu {
+    z-index: 1050 !important;
+  }
+}
+
 @media only screen and (min-width: 1199px) {
   .search,
   .language {
@@ -177,6 +192,13 @@ nav .searchResults {
 
   .show {
     display: block !important;
+  }
+
+  // Make sure language/currency are visible and properly styled
+  .language {
+    display: inline-block !important;
+    position: relative;
+    z-index: 1001;
   }
 
   .navbar-collapse {
@@ -366,86 +388,5 @@ nav .searchResults {
     color: #171717;
     font-size: 16px;
     border: 1px solid #dcb87a;
-  }
-}
-
-// .ar {
-//     right: 0 !important;
-//     left: auto;
-//     text-align: right;
-// }
-
-// .en {
-//     left: 0 !important;
-//     right: auto;
-//     text-align: left;
-// }
-
-@media only screen and (max-width: 500px) {
-  .ar {
-    left: 0 !important;
-    right: auto;
-    text-align: right;
-  }
-
-  .en {
-    right: 0 !important;
-    left: auto;
-    text-align: left;
-  }
-}
-
-/* Modern scroll/compact navbar styles */
-nav {
-  transition: background 0.25s ease, padding 0.25s ease, box-shadow 0.25s ease;
-}
-
-/* When the page is scrolled we apply a compact, slightly opaque background and shadow */
-nav.scrolled {
-  top: 0;
-  left: 0;
-  right: 0;
-  background: rgba(217, 185, 155, 0.95);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 6px 18px rgba(217, 185, 155, 0.08);
-  padding: 6px 0;
-  z-index: 9999;
-}
-
-/* Dark-mode support when nav was previously absolute atop a dark hero */
-.absolute-position.scrolled {
-  background: rgba(217, 185, 155, 0.95);
-}
-
-/* Make links darker on scrolled state for contrast */
-nav.scrolled ul li a,
-nav.scrolled ul li button {
-  color: #fff !important;
-}
-
-/* Shrink logo smoothly when scrolled */
-.navbar-brand img {
-  transition: width 0.25s ease, height 0.25s ease, transform 0.25s ease;
-}
-nav.scrolled .navbar-brand img {
-  width: 48px !important;
-  height: 48px !important;
-  transform: translateY(-2px);
-}
-
-/* Toggler and icons color in scrolled state */
-nav.scrolled .navbar-toggler span {
-  background: #fff;
-}
-
-/* Ensure collapse menu content still readable when fixed */
-nav.scrolled .navbar-collapse {
-  background: transparent;
-}
-
-@media (max-width: 991px) {
-  nav.scrolled {
-    position: fixed;
   }
 }

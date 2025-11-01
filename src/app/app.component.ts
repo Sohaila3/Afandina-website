@@ -1,4 +1,10 @@
-import { Component, Inject, PLATFORM_ID, Optional, HostListener } from '@angular/core';
+import {
+  Component,
+  Inject,
+  PLATFORM_ID,
+  Optional,
+  HostListener,
+} from '@angular/core';
 import { BrandsSection, CategoriesSection } from './Models/home.model';
 
 import { HomeService } from './services/home/home.service';
@@ -17,20 +23,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 
-
-
 @Component({
-
   selector: 'app-root',
 
   templateUrl: './app.component.html',
 
-  styleUrls: ['./app.component.scss']
-
+  styleUrls: ['./app.component.scss'],
 })
-
 export class AppComponent {
-
   title = 'Afandina';
 
   brandsSection!: BrandsSection;
@@ -47,9 +47,9 @@ export class AppComponent {
 
   dark_logo!: string;
 
-  light_logo !: string;
+  light_logo!: string;
 
-  black_logo !: string;
+  black_logo!: string;
 
   isScrolled = false;
 
@@ -62,10 +62,7 @@ export class AppComponent {
 
   isLoading$ = this.loaderService.loading$;
 
-
-
   constructor(
-
     @Inject(PLATFORM_ID) private platformId: Object,
 
     @Optional() @Inject('LANGUAGE') private ssrLang: string,
@@ -82,64 +79,43 @@ export class AppComponent {
 
     private route: ActivatedRoute,
 
-    private router: Router,
-
-  ) { }
-
-
+    private router: Router
+  ) {}
 
   ngOnInit() {
-
     // Get current language - this will handle both SSR and browser cases
 
     const currentLang = this.languageService.getCurrentLanguage();
-
-    
 
     // Apply language settings
 
     this.applyLanguageSettings(currentLang);
 
-    
-
     if (isPlatformBrowser(this.platformId)) {
-
       this.getSettings();
 
-
-
       this.sharedDataService.categories$.subscribe((res) => {
-
         this.sharedDataService.updateCategories(res);
-
       });
-
-  
 
       this.sharedDataService.brands$.subscribe((res) => {
-
         this.sharedDataService.updateBrands(res);
-
       });
-
     }
-
   }
 
-
-
   applyLanguageSettings(newLang: any) {
+    // Only run in browser
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
 
     const bo = document.querySelector('body');
 
     const el = document.querySelector('html');
 
-
-
     if (el && bo) {
-
       if (newLang === 'ar') {
-
         el.setAttribute('lang', 'ar');
 
         el.setAttribute('direction', 'rtl');
@@ -151,9 +127,7 @@ export class AppComponent {
         bo.classList.add('arabic');
 
         el.classList.add('arabic');
-
       } else {
-
         el.setAttribute('lang', 'en');
 
         el.setAttribute('direction', 'ltr');
@@ -165,14 +139,9 @@ export class AppComponent {
         bo.classList.remove('arabic');
 
         el.classList.remove('arabic');
-
       }
-
     }
-
   }
-
-
 
   getSettings() {
     this.homeService.getSettings().subscribe((res: any) => {
@@ -191,11 +160,16 @@ export class AppComponent {
 
       const translationData = res.data.main_setting.translation_data;
       this.translationService.setTranslations(translationData);
-      this.updateIconHref();
 
-      const defaultCurrency = this.currencies.find((currency: any) => currency.is_default === 1);
+      if (isPlatformBrowser(this.platformId)) {
+        this.updateIconHref();
+      }
 
-      if (defaultCurrency) {
+      const defaultCurrency = this.currencies.find(
+        (currency: any) => currency.is_default === 1
+      );
+
+      if (defaultCurrency && isPlatformBrowser(this.platformId)) {
         localStorage.setItem('currentCurrency', defaultCurrency.id.toString());
         localStorage.setItem('currencyCode', defaultCurrency.code);
         localStorage.setItem('currency_name', defaultCurrency.name);
@@ -206,13 +180,16 @@ export class AppComponent {
     });
   }
 
-
-
   updateIconHref() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
 
     const iconUrl = `${this.favicon}`;
 
-    const link = document.querySelector("link[rel*='icon']") || document.createElement('link');
+    const link =
+      document.querySelector("link[rel*='icon']") ||
+      document.createElement('link');
 
     link.setAttribute('rel', 'icon');
 
@@ -220,30 +197,34 @@ export class AppComponent {
 
     link.setAttribute('href', iconUrl);
 
-
-
     if (!document.head.contains(link)) {
-
       document.head.appendChild(link);
-
     }
-
   }
 
   // مراقبة حدث التمرير
   @HostListener('window:scroll')
   onWindowScroll() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     // ظهور الزر عندما يتجاوز التمرير 300 بكسل
-    const scrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    const scrollPosition =
+      window.pageYOffset ||
+      document.documentElement.scrollTop ||
+      document.body.scrollTop ||
+      0;
     this.isScrolled = scrollPosition > 300;
   }
 
   // وظيفة التمرير لأعلى الصفحة
   scrollToTop() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     window.scrollTo({
       top: 0,
-      behavior: 'smooth'
+      behavior: 'smooth',
     });
   }
-
 }
