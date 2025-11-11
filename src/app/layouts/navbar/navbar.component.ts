@@ -135,7 +135,10 @@ export class NavbarComponent {
     }
   }
 
-  closeNavbar() {
+  closeNavbar(event?: Event) {
+    if (event) {
+      event.preventDefault();
+    }
     if (
       isPlatformBrowser(this.platformId) &&
       this.navbarCollapse?.nativeElement
@@ -200,7 +203,7 @@ export class NavbarComponent {
     }
   }
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   onResize() {
     if (isPlatformBrowser(this.platformId)) {
       this.isMobile = window.innerWidth <= 768;

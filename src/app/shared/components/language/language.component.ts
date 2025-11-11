@@ -23,6 +23,7 @@ interface Language {
 })
 export class LanguageComponent implements OnInit, OnDestroy {
   currentLang: string = 'en';
+  currentLangName: string = 'English';
   languages: Language[] = [];
   private isBrowser: boolean;
   private subscription = new Subscription();
@@ -38,6 +39,7 @@ export class LanguageComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Get current language and apply settings
     this.currentLang = this.languageService.getCurrentLanguage();
+    this.updateCurrentLangName();
     if (this.isBrowser) {
       this.applyLanguageSettings(this.currentLang);
     }
@@ -56,6 +58,7 @@ export class LanguageComponent implements OnInit, OnDestroy {
               this.applyLanguageSettings(this.currentLang);
             }
           }
+          this.updateCurrentLangName();
         }
       })
     );
@@ -63,6 +66,11 @@ export class LanguageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+  }
+
+  private updateCurrentLangName(): void {
+    const langData = this.languages.find((l) => l.code === this.currentLang);
+    this.currentLangName = langData ? langData.name : this.currentLang;
   }
 
   getLanguageUrl(langCode: string): string {
@@ -115,6 +123,10 @@ export class LanguageComponent implements OnInit, OnDestroy {
 
     // Apply direction and attributes immediately
     this.applyLanguageSettings(newLang);
+
+    // Update current language and name
+    this.currentLang = newLang;
+    this.updateCurrentLangName();
 
     // Navigate to the equivalent URL with the new language code
     const newUrl = this.getLanguageUrl(newLang);
