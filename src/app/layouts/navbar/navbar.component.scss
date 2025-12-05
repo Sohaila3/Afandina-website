@@ -7,7 +7,7 @@ nav {
     li {
       text-transform: capitalize;
       margin: 10px;
-      position: relative;
+      position: static;
       a,
       button {
         font-size: 18px;
@@ -99,6 +99,25 @@ nav .searchResults {
 
 .brands,
 .Categories {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: #c4b49b transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #d9c29c;
+    border-radius: 50px;
+  }
+
   a {
     text-transform: capitalize;
     text-decoration: none;

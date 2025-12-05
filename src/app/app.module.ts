@@ -6,7 +6,6 @@ import { AppComponent } from './app.component';
 import { LayoutsModule } from './layouts/layouts.module';
 import { HomeComponent } from './pages/home/home.component';
 import { MaterialModule } from './shared-modules/material/material.module';
-import { SwiperModule } from 'swiper/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
   HttpClientModule,
@@ -16,6 +15,7 @@ import {
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { createTranslateLoader } from './translate/translate-loader';
 import { SharedModule } from './shared/shared.module';
+import { SwiperModule } from 'swiper/angular';
 import { LanguageCurrencyInterceptor } from './core/interceptors/language-currency.interceptor';
 import { RouterModule } from '@angular/router';
 import { LoaderInterceptor } from './core/interceptors/loader/loader.interceptor';
@@ -25,7 +25,7 @@ import { TranslationService } from './core/services/Translation/translation.serv
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { NotFoundInterceptor } from './core/interceptors/not-found.interceptor';
 import { AllCarsComponent } from './pages/all-cars/all-cars.component';
-import { GoogleMapsModule } from '@angular/google-maps';
+import { ProductUiModule } from './pages/product/product-ui.module';
 
 @NgModule({
   declarations: [
@@ -40,7 +40,6 @@ import { GoogleMapsModule } from '@angular/google-maps';
     AppRoutingModule,
     LayoutsModule,
     MaterialModule,
-    SwiperModule,
     BrowserAnimationsModule,
     HttpClientModule,
     RouterModule,
@@ -52,7 +51,8 @@ import { GoogleMapsModule } from '@angular/google-maps';
       },
     }),
     SharedModule,
-    GoogleMapsModule,
+    SwiperModule,
+    ProductUiModule,
   ],
   providers: [
     {

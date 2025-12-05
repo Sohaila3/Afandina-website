@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { END_POINTS } from 'src/app/core/globals/global-config';
@@ -26,7 +26,8 @@ export class ProductService {
   }
 
   getFilteredProducts(data: { filters: any }): Observable<any> {
-    return this.http.post<any>(API_URL_filterData, data);
+    const headers = new HttpHeaders({ 'x-skip-loader': '1' });
+    return this.http.post<any>(API_URL_filterData, data, { headers });
   }
   
 

@@ -60,6 +60,50 @@
     } 
 }
 
+/* Skeleton loading cards (mirrors product card skeletons) */
+.card-skeleton {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    height: 100%;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.skeleton-image {
+    width: 100%;
+    height: 130px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #f7f7f7 25%, #ededed 37%, #f7f7f7 63%);
+    background-size: 400% 100%;
+    animation: shimmer 0.9s ease-in-out infinite;
+}
+
+.skeleton-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.skeleton-lines .line {
+    height: 10px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #f7f7f7 25%, #ededed 37%, #f7f7f7 63%);
+    background-size: 400% 100%;
+    animation: shimmer 0.9s ease-in-out infinite;
+}
+
+.skeleton-lines .line.short { width: 50%; }
+.skeleton-lines .line.medium { width: 68%; }
+.skeleton-lines .line.long { width: 88%; }
+
+@keyframes shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
 .cars_brand,
 .cars_type{
     h3{

@@ -13,6 +13,8 @@ export class CardBlogComponent implements OnInit, OnDestroy {
   translations: Record<string, string> = {};
   currentLang: string = 'en';
   private translationsSubscription: Subscription | undefined;
+  private readonly storageBase = 'https://admin.afandinacarrental.com/storage/';
+  private readonly fallbackImage = '/assets/images/logo/car3-optimized.webp';
 
   constructor(
     private translationService: TranslationService,
@@ -30,6 +32,42 @@ export class CardBlogComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.translationsSubscription) {
       this.translationsSubscription.unsubscribe();
+    }
+  }
+
+  getBlogImage(): string {
+    if (!this.blogData) return this.fallbackImage;
+
+    const candidate =
+      this.blogData.image_path ||
+      this.blogData.image ||
+      this.blogData.featured_image ||
+      this.blogData.thumbnail ||
+      this.blogData.cover ||
+      this.blogData?.data?.image_path ||
+      this.blogData?.data?.image ||
+      '';
+
+    if (!candidate) return this.fallbackImage;
+
+    if (/^https?:\/\//i.test(candidate)) {
+      return candidate;
+    }
+
+    const normalized = (candidate as string).replace(/^\/+/, '');
+
+    // If backend already returns a path under storage/, avoid double prefixing
+    if (normalized.startsWith('storage/')) {
+      return `https://admin.afandinacarrental.com/${normalized}`;
+    }
+
+    return this.storageBase + normalized;
+  }
+
+  onImgError(event: Event): void {
+    const target = event.target as HTMLImageElement | null;
+    if (target && target.src !== window.location.origin + this.fallbackImage) {
+      target.src = this.fallbackImage;
     }
   }
 }

@@ -6,11 +6,11 @@
         <div class="head d-flex align-items-center justify-content-between">
             <h2>{{categoriesSection.section_title}}</h2>
             <div class="buttons">
-                <button class="custom-prev-arrow" (click)="carsTypeSwiper.swiperRef.slidePrev()">
+                <button class="custom-prev-arrow" (click)="carsTypeSwiper.swiperRef.slidePrev()" aria-label="Previous category">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-right': this.currentLang === 'ar', 'fa-chevron-left': this.currentLang !== 'ar' }"></i>
                 </button>
-                <button class="custom-next-arrow" (click)="carsTypeSwiper.swiperRef.slideNext()">
+                <button class="custom-next-arrow" (click)="carsTypeSwiper.swiperRef.slideNext()" aria-label="Next category">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-left': this.currentLang === 'ar', 'fa-chevron-right': this.currentLang !== 'ar' }"></i>
                 </button>
@@ -39,11 +39,11 @@
         <div class="head d-flex align-items-center justify-content-between">
             <h2>{{brandsSection.section_title}}</h2>
             <div class="buttons">
-                <button class="custom-prev-arrow" (click)="carsBrandSwiper.swiperRef.slidePrev()">
+                <button class="custom-prev-arrow" (click)="carsBrandSwiper.swiperRef.slidePrev()" aria-label="Previous brand">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-right': this.currentLang === 'ar', 'fa-chevron-left': this.currentLang !== 'ar' }"></i>
                 </button>
-                <button class="custom-next-arrow" (click)="carsBrandSwiper.swiperRef.slideNext()">
+                <button class="custom-next-arrow" (click)="carsBrandSwiper.swiperRef.slideNext()" aria-label="Next brand">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-left': this.currentLang === 'ar', 'fa-chevron-right': this.currentLang !== 'ar' }"></i>
                 </button>
@@ -72,7 +72,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-3 col-md-4 col-sm-6 mb-3 p-0" *ngFor="let car of locationDetails.cars">
-                <app-card [carData]="car"></app-card>
+                <app-product-card [carData]="car"></app-product-card>
             </div>
         </div>
     </div>

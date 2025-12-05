@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { BlogDetailsComponent } from './pages/blog/blog-details/blog-details.component';
+import { productRoutesCanMatch } from './pages/product/product-routes.can-match';
 
 const routes: Routes = [
   // Redirect old product/brand and product/category URLs to new structure
@@ -46,6 +47,7 @@ const routes: Routes = [
       // Updated car rental routes
       {
         path: '',
+        canMatch: [productRoutesCanMatch],
         loadChildren: () =>
           import('./pages/product/product.module').then((m) => m.ProductModule),
       },

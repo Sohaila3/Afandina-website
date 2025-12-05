@@ -14,7 +14,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavigationEnd, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
-import SwiperCore, { Pagination, Autoplay, Navigation } from 'swiper';
 import { SwiperComponent } from 'swiper/angular';
 
 // Services
@@ -22,8 +21,7 @@ import { LanguageService } from 'src/app/core/services/language.service';
 import { TranslationService } from 'src/app/core/services/Translation/translation.service';
 import { SharedDataService } from 'src/app/services/SharedDataService/shared-data-service.service';
 
-// Activate Swiper modules
-SwiperCore.use([Pagination, Autoplay, Navigation]);
+// Swiper modules are registered lazily to avoid bundling at build time.
 
 @Component({
   selector: 'app-card',
@@ -85,6 +83,14 @@ export class CardComponent implements OnInit, AfterViewInit, OnDestroy {
     }, 150);
   }
 
+  ngOnInit(): void {
+    this.initializeComponent();
+    // Ensure swiper modules are registered lazily on browser
+    if (isPlatformBrowser(this.platformId)) {
+      this.ensureSwiperModulesRegistered();
+    }
+  }
+
   /**
    * Generates WhatsApp sharing URL with car details
    */
@@ -103,9 +109,7 @@ export class CardComponent implements OnInit, AfterViewInit, OnDestroy {
     }?text=${encodeURIComponent(message)}`;
   }
 
-  ngOnInit(): void {
-    this.initializeComponent();
-  }
+  // ngOnInit is implemented above to initialize component and register swiper lazily
 
   ngOnDestroy(): void {
     // Clean up subscriptions
@@ -140,6 +144,25 @@ export class CardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Load translations
     this.loadTranslations();
+  }
+
+  /**
+   * Dynamically import and register Swiper modules to avoid bundling them into main chunk.
+   */
+  private async ensureSwiperModulesRegistered() {
+    try {
+      const mod: any = await import('swiper');
+      const SwiperCore: any = mod?.default || mod?.Swiper || (window as any).Swiper;
+      const Pagination = mod?.Pagination;
+      const Autoplay = mod?.Autoplay;
+      const Navigation = mod?.Navigation;
+      if (SwiperCore && SwiperCore.use) {
+        SwiperCore.use([Pagination, Autoplay, Navigation]);
+        (window as any).__swiper_registered = true;
+      }
+    } catch (e) {
+      // ignore errors - swiper features will still work where available
+    }
   }
 
   /**

@@ -1,12 +1,13 @@
 <p-card [style]="{ width: '100%' }" class="card_blog">
     <ng-template pTemplate="header">
         <div class="position-relative blog_img">
-            <img [src]="blogData.image_path" 
-                [alt]="blogData.title || 'Blog Post Image'" 
-                [title]="blogData.title || 'Blog Post Image'" 
+            <img [src]="getBlogImage()" 
+                [alt]="blogData?.title || 'Blog Post Image'" 
+                [title]="blogData?.title || 'Blog Post Image'" 
                 width="auto" height="auto" 
                 style="object-fit: cover;" 
-                loading="lazy"/>
+                loading="lazy"
+                (error)="onImgError($event)"/>
         </div>
     </ng-template>
     <div class="date">

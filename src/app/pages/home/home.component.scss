@@ -10,6 +10,34 @@
   max-height: 900px;
   overflow: hidden;
   background: #000;
+  transition: background 0.3s ease;
+
+  .hero-skeleton {
+    display: none;
+  }
+
+  &.hero-loading {
+    background: #070707;
+
+    .hero-swiper,
+    .hero-content,
+    .hero-controls,
+    .social-icons-modern {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .hero-skeleton {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      gap: 24px;
+      padding: 0 80px;
+      position: relative;
+      z-index: 10;
+    }
+  }
 
   // ============================================
   // MODERN SOCIAL ICONS
@@ -24,6 +52,11 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+
+    a,
+    .social-link {
+      text-decoration: none;
+    }
 
     .social-icon-wrapper {
       position: relative;
@@ -97,6 +130,21 @@
     }
   }
 
+  // mirror social icons away from the text on LTR
+  &.social-ltr {
+    .social-icons-modern {
+      left: auto;
+      right: 40px;
+    }
+  }
+
+  &.social-rtl {
+    .social-icons-modern {
+      left: 40px;
+      right: auto;
+    }
+  }
+
   // ============================================
   // HERO SWIPER
   // ============================================
@@ -123,26 +171,60 @@
     height: 100%;
   }
 
-  .hero-media,
   .hero-image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+
+    picture,
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .hero-media {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
   }
 
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    z-index: 0;
+    pointer-events: none;
+    backface-visibility: hidden;
+  }
+
+  .hero-video-active {
+    opacity: 1;
+  }
+
   .parallax-image {
-    transform: scale(1.1);
+    transform: scale(1.05);
     transition: transform 0.3s ease-out;
-    animation: parallaxZoom 20s ease-in-out infinite alternate;
+  }
+
+  &.motion-ready {
+    .parallax-image {
+      animation: parallaxZoom 20s ease-in-out infinite alternate;
+    }
   }
 
   @keyframes parallaxZoom {
     0% {
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
     100% {
-      transform: scale(1.2);
+      transform: scale(1.12);
     }
   }
 
@@ -550,6 +632,15 @@
     }
   }
 
+  // RTL: keep buttons meaningful and mirrored
+  [dir='rtl'] & {
+    .hero-navigation {
+      right: auto;
+      left: 80px;
+      flex-direction: row-reverse;
+    }
+  }
+
   // ============================================
   // FLOATING SHAPES
   // ============================================
@@ -559,6 +650,8 @@
     z-index: 3;
     pointer-events: none;
     overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 
     .shape {
       position: absolute;
@@ -569,7 +662,7 @@
         transparent
       );
       filter: blur(60px);
-      animation: float 20s ease-in-out infinite;
+      animation: none;
 
       &.shape-1 {
         width: 400px;
@@ -597,16 +690,26 @@
     }
   }
 
+  &.motion-ready {
+    .floating-shapes {
+      opacity: 1;
+
+      .shape {
+        animation: float 20s ease-in-out infinite;
+      }
+    }
+  }
+
   @keyframes float {
     0%,
     100% {
       transform: translate(0, 0) scale(1);
     }
     33% {
-      transform: translate(30px, -30px) scale(1.1);
+      transform: translate(18px, -18px) scale(1.05);
     }
     66% {
-      transform: translate(-20px, 20px) scale(0.9);
+      transform: translate(-12px, 12px) scale(0.97);
     }
   }
 
@@ -643,6 +746,37 @@
       opacity: 1;
     }
   }
+
+  // ================================
+  // SPECIAL OFFERS / CAR-ONLY SWIPER TIGHTER SPACING
+  // ================================
+  .car_only {
+    .swiper {
+      padding: 0;
+    }
+
+    ::ng-deep .swiper-wrapper {
+      margin: 0 -6px; // pull slides slightly outward to reduce visual gaps
+    }
+
+    ::ng-deep .swiper-slide {
+      padding: 0 6px; // small gutter to keep edges neat
+    }
+
+    .card_product {
+      width: 100% !important; // remove the 97% width to sit cards closer
+    }
+  }
+}
+
+.defer-sentinel {
+  display: block;
+  width: 100%;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
 }
 
 // ============================================
@@ -660,6 +794,13 @@
 
     .hero-navigation {
       right: 40px;
+    }
+  }
+
+  .hero_section.social-ltr {
+    .social-icons-modern {
+      left: auto;
+      right: 20px;
     }
   }
 }
@@ -755,6 +896,14 @@
         height: 42px;
         font-size: 14px;
       }
+    }
+  }
+
+  [dir='rtl'] .hero_section {
+    .hero-navigation {
+      right: auto;
+      left: 20px;
+      flex-direction: row-reverse;
     }
   }
 }
@@ -922,7 +1071,7 @@
   p {
     font-size: 14px;
     font-weight: 400;
-    color: #848484;
+    color: #5a5a5a; /* Improved contrast from #848484 */
   }
 }
 
@@ -1081,6 +1230,8 @@
               margin-left: 1rem;
               display: flex;
               align-items: center;
+              order: 2;
+              transition: all 0.3s linear;
             }
 
             &:hover {
@@ -3171,4 +3322,172 @@ video {
       left: 20px;
     }
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero_section {
+    .parallax-image,
+    .floating-shapes .shape,
+    .scroll-indicator .scroll-line {
+      animation: none !important;
+      transform: none !important;
+    }
+
+    .hero-content .stats-cards,
+    .hero-content .hero-actions,
+    .hero-navigation .nav-button,
+    .hero-navigation .pagination-dot {
+      transition: none !important;
+    }
+  }
+}
+
+// ============================================
+// CONTENT VISIBILITY FOR BELOW-THE-FOLD SECTIONS
+// ============================================
+.cars_type,
+.cars_brand,
+.instagram-section,
+.where_find_us_modern,
+.documents,
+.brands,
+.why_afandina,
+.footer,
+.banner,
+.special-offers,
+.more_sections {
+  content-visibility: auto;
+  contain-intrinsic-size: 600px;
+}
+
+// ============================================
+// SKELETON PLACEHOLDERS
+// ============================================
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.hero-skeleton,
+.skeleton-line,
+.skeleton-btn,
+.skeleton-card,
+.skeleton-chip,
+.skeleton-stat,
+.skeleton-stat-icon {
+  background: linear-gradient(90deg, #1b1b1b 25%, #2a2a2a 37%, #1b1b1b 63%);
+  background-size: 400% 100%;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+  border-radius: 12px;
+}
+
+.hero-skeleton {
+  background: transparent;
+
+  .skeleton-line {
+    height: 18px;
+    width: 60%;
+    margin-bottom: 12px;
+
+    &:nth-child(2) {
+      width: 70%;
+    }
+
+    &:nth-child(3) {
+      width: 45%;
+    }
+  }
+
+  .skeleton-chip {
+    width: 160px;
+    height: 36px;
+  }
+
+  .skeleton-actions {
+    display: flex;
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .skeleton-btn {
+    flex: 0 0 180px;
+    height: 48px;
+    border-radius: 999px;
+  }
+
+  .skeleton-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 32px;
+  }
+
+  .skeleton-stat {
+    flex: 0 0 200px;
+    height: 90px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(90deg, #1d1d1d 25%, #2a2a2a 50%, #1d1d1d 75%);
+  }
+
+  .skeleton-stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+}
+
+.skeleton-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.skeleton-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+.skeleton-carousel {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.skeleton-card {
+  height: 140px;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #fafafa 50%, #f0f0f0 75%);
+}
+
+@media (max-width: 768px) {
+  .hero_section.hero-loading {
+    .hero-skeleton {
+      padding: 0 24px;
+    }
+
+    .skeleton-stats {
+      flex-direction: column;
+    }
+  }
+
+  .skeleton-carousel {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+.lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 600px auto;
+  contain: layout paint;
+}
+
+.lazy-section--short {
+  contain-intrinsic-size: 400px auto;
 }

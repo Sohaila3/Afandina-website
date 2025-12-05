@@ -63,9 +63,9 @@
 
       <!-- Quick Links -->
       <div class="footer-section links-section">
-        <h6 class="section-title">
+        <h3 class="section-title">
           <i class="fa-solid fa-link me-2"></i>{{ translations["quick_links"] }}
-        </h6>
+        </h3>
         <ul class="link-list">
           <li>
             <a
@@ -101,9 +101,9 @@
 
       <!-- Support Section -->
       <div class="footer-section support-section">
-        <h6 class="section-title">
+        <h3 class="section-title">
           <i class="fa-solid fa-headset me-2"></i>{{ translations["support"] }}
-        </h6>
+        </h3>
         <ul class="support-list">
           <li>
             <a
@@ -148,10 +148,10 @@
       <div class="footer-row full-width">
         <!-- Brands Section -->
         <div class="footer-section brands-section">
-          <h6 class="section-title">
+          <h3 class="section-title">
             <i class="fa-solid fa-car-side me-2"></i
             >{{ brandsSection?.section_title }}
-          </h6>
+          </h3>
           <div class="tag-cloud">
             <a
               *ngFor="let brand of brandsSection?.brands"
@@ -167,12 +167,12 @@
 
         <!-- Categories Section -->
         <div class="footer-section categories-section">
-          <h6 class="section-title">
+          <h3 class="section-title">
             <i class="fa-solid fa-layer-group me-2"></i
             >{{
               categoriesSection?.section_title || translations["categories"]
             }}
-          </h6>
+          </h3>
           <div class="tag-cloud">
             <a
               *ngFor="let category of categoriesSection?.categories"
@@ -188,10 +188,10 @@
 
         <!-- Locations Section -->
         <div class="footer-section locations-section">
-          <h6 class="section-title">
+          <h3 class="section-title">
             <i class="fa-solid fa-location-dot me-2"></i
             >{{ translations["locations"] }}
-          </h6>
+          </h3>
           <div class="tag-cloud">
             <a
               *ngFor="let location of locationsSection?.locations"
@@ -211,32 +211,44 @@
     <div class="footer-bottom">
       <!-- Payment Methods -->
       <div class="payment-section">
-        <h6 class="payment-title">
+        <h3 class="payment-title">
           {{ translations["available_payment_methods"] }}
-        </h6>
+        </h3>
         <div class="payment-icons">
           <img
             src="../../../../assets/images/icon/1.webp"
+            srcset="../../../../assets/images/icon/1-optimized.webp 1x, ../../../../assets/images/icon/1.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
           <img
             src="../../../../assets/images/icon/2.webp"
+            srcset="../../../../assets/images/icon/2-optimized.webp 1x, ../../../../assets/images/icon/2.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
           <img
             src="../../../../assets/images/icon/3.webp"
+            srcset="../../../../assets/images/icon/3-optimized.webp 1x, ../../../../assets/images/icon/3.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
           <img
             src="../../../../assets/images/icon/4.webp"
+            srcset="../../../../assets/images/icon/4-optimized.webp 1x, ../../../../assets/images/icon/4.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
           <img
             src="../../../../assets/images/icon/5.webp"
+            srcset="../../../../assets/images/icon/5-optimized.webp 1x, ../../../../assets/images/icon/5.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
           <img
             src="../../../../assets/images/icon/6.webp"
+            srcset="../../../../assets/images/icon/6-optimized.webp 1x, ../../../../assets/images/icon/6.webp 2x"
+            sizes="(max-width: 768px) 15vw, 8vw"
             [alt]="translations['available_payment_methods']"
           />
         </div>

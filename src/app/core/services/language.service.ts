@@ -97,26 +97,17 @@ export class LanguageService {
     // Only allow switching to supported languages
     const lang = (language || '').toLowerCase();
     const target = this.allowedLanguages.includes(lang) ? lang : 'en';
-    if (this.currentLanguage !== target && isPlatformBrowser(this.platformId)) {
-      this.currentLanguage = target;
-      this.storageService.setItem('currentLanguage', target);
-
-      // Handle URL update
-      const currentPath = window.location.pathname;
-      const pathSegments = currentPath.split('/').filter((segment) => segment);
-
-      if (pathSegments.length > 0 && /^[a-z]{2}$/i.test(pathSegments[0])) {
-        pathSegments[0] = target;
-      } else {
-        pathSegments.unshift(target);
-      }
-
-      const newPath = '/' + pathSegments.join('/');
-      if (newPath !== currentPath) {
-        // Navigate to new URL
-        window.location.href = newPath;
-      }
+    if (this.currentLanguage === target) {
+      return;
     }
+
+    this.currentLanguage = target;
+    if (isPlatformBrowser(this.platformId)) {
+      this.storageService.setItem('currentLanguage', target);
+    }
+
+    // notify listeners (e.g. components that need to react without reloading)
+    this.languageChange.next(target);
   }
 
   getCurrentCurrency(): string {

@@ -17,6 +17,7 @@ import { CategoriesComponent } from './categories/categories.component';
 import { OnlyUsComponent } from './only-us/only-us.component'; // Import FormsModule
 import { ImageModule } from 'primeng/image';
 import { LocationComponent } from './location/location.component';
+import { ProductUiModule } from './product-ui.module';
 @NgModule({
   declarations: [
     ProductFilterComponent,
@@ -38,6 +39,8 @@ import { LocationComponent } from './location/location.component';
     ReactiveFormsModule,
     FormsModule,
     ImageModule
+    ,
+    ProductUiModule
 ]
 })
 export class ProductModule { }

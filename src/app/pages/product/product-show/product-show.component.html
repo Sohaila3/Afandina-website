@@ -540,7 +540,7 @@
         *ngFor="let car of productDetails?.data?.related_cars; let i = index"
         role="listitem"
       >
-        <app-card [carData]="car"></app-card>
+        <app-product-card [carData]="car"></app-product-card>
       </ng-template>
     </swiper>
   </div>

@@ -21,6 +21,8 @@ export class CategoriesComponent implements OnInit, OnDestroy {
   categoriesSection!: CategoriesSection;
   categorySlug: string | undefined;
   categoryDetails: any = { category: {}, cars: [] }; // Initialize with empty objects
+  loadingCategory = true;
+  skeletonPlaceholders = Array.from({ length: 8 });
   currentLang: string = 'en';
   translations: Record<string, string> = {};
   swiperConfig: any = {
@@ -62,6 +64,7 @@ export class CategoriesComponent implements OnInit, OnDestroy {
         this.categorySlug = params['slug'];
         // Reset category details before loading new ones
         this.categoryDetails = { category: {}, cars: [] };
+        this.loadingCategory = true;
         this.cdr.detectChanges();
         this.getBrandBySlug();
       }
@@ -83,17 +86,20 @@ export class CategoriesComponent implements OnInit, OnDestroy {
 
   getBrandBySlug() {
     if (this.categorySlug) {
+      this.loadingCategory = true;
       const categorySubscription = this.homeService.getCaategoryDetails(this.categorySlug).subscribe(
         (res: any) => {
           this.categoryDetails = res;
           if (isPlatformServer(this.platformId) || isPlatformBrowser(this.platformId)) {
             this.seo.setMetaTags(this.categoryDetails.category.seo_data, 'category');
           }
+          this.loadingCategory = false;
           this.cdr.detectChanges();
         },
         (error) => {
           console.error('Error loading category details:', error);
           this.categoryDetails = { category: {}, cars: [] };
+          this.loadingCategory = false;
           this.cdr.detectChanges();
         }
       );

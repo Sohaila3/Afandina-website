@@ -19,16 +19,14 @@ export class LoaderService {
 
 
 
-  show(): void {
-
+  show(durationMs: number = 1000): void {
     this.loadingSubject.next(true);
 
-    setTimeout(() => {
-
-      this.hide();
-
-    }, 3000);  // Hide after 3 seconds
-
+    if (durationMs > 0) {
+      setTimeout(() => {
+        this.hide();
+      }, durationMs);
+    }
   }
 
 

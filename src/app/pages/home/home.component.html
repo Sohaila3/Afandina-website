@@ -1,356 +1,347 @@
 <main class="home">
-  <section class="hero_section" *ngIf="headerSection">
-    <!-- Social Icons with Modern Design -->
-
-    <div class="social-icons-modern" *ngIf="headerSection.social_media_links">
-      <div class="social-icon-wrapper">
-        <a
-          [href]="headerSection.social_media_links.facebook"
-          target="_blank"
-          [title]="'Follow us on Facebook'"
-          class="social-link"
-        >
-          <i class="fab fa-facebook-f"></i>
-        </a>
-      </div>
-      <div class="social-icon-wrapper">
-        <a
-          [href]="headerSection.social_media_links.instagram"
-          target="_blank"
-          [title]="'Follow us on Instagram'"
-          class="social-link"
-        >
-          <i class="fab fa-instagram"></i>
-        </a>
-      </div>
-      <div class="social-icon-wrapper">
-        <a
-          [href]="headerSection.social_media_links.twitter"
-          target="_blank"
-          [title]="'Follow us on Twitter'"
-          class="social-link"
-        >
-          <i class="fab fa-twitter"></i>
-        </a>
-      </div>
-      <div class="social-icon-wrapper">
-        <a
-          [href]="headerSection.social_media_links.snapchat"
-          target="_blank"
-          [title]="'Follow us on Snapchat'"
-          class="social-link"
-        >
-          <i class="fa-brands fa-snapchat"></i>
-        </a>
-      </div>
-    </div>
-
-    <!-- Hero Swiper -->
-    <swiper
-      #heroSwiper
-      [config]="heroSwiperConfig"
-      class="hero-swiper"
-      (slideChange)="onSlideChange($event)"
-    >
-      <ng-template swiperSlide *ngFor="let slide of heroSlides; let i = index">
-        <div class="hero-slide">
-          <!-- Media Container -->
-          <div class="hero-media-wrapper">
-            <!-- Video -->
-            <video
-              *ngIf="slide.media_type === 'video'"
-              [src]="slide.video_path"
-              autoplay
-              [muted]="true"
-              loop
-              playsinline
-              preload="metadata"
-              class="hero-media"
-            ></video>
-
-            <!-- Image with Parallax Effect -->
-            <div
-              *ngIf="slide.media_type === 'image'"
-              class="hero-image-container"
-            >
-              <img
-                [src]="slide.image_path"
-                [alt]="slide.title || 'Afandina Car Rental'"
-                class="hero-media parallax-image"
-                loading="eager"
-                [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
-              />
-            </div>
-
-            <!-- Gradient Overlay -->
-            <div class="gradient-overlay"></div>
-            <div class="gradient-overlay-secondary"></div>
-          </div>
-
-          <!-- Content Container with Glassmorphism -->
-          <div class="hero-content">
-            <div class="content-wrapper">
-              <div class="content-badge" *ngIf="slide.badge">
-                <span class="badge-text">{{ slide.badge }}</span>
-              </div>
-
-              <!-- show whole title on one line (don't split per word) -->
-              <h1 class="hero-title" *ngIf="slide.title">{{ slide.title }}</h1>
-
-              <p class="hero-description" *ngIf="slide.description">
-                {{ slide.description }}
-              </p>
-
-              <div class="hero-actions" *ngIf="slide.show_cta">
-                <button class="cta-primary">
-                  <span>{{
-                    translations["explore_cars"] || "Explore Cars"
-                  }}</span>
-                  <i class="fas fa-arrow-right"></i>
-                </button>
-                <button class="cta-secondary">
-                  <span>{{ translations["learn_more"] || "Learn More" }}</span>
-                </button>
-              </div>
-
-              <!-- Stats Cards -->
-              <div class="stats-cards" *ngIf="slide.show_stats">
-                <div class="stat-card">
-                  <div class="stat-icon">
-                    <i class="fas fa-car"></i>
-                  </div>
-                  <div class="stat-content">
-                    <span class="stat-number">500+</span>
-                    <span class="stat-label">{{
-                      translations["cars_available"] || "Cars Available"
-                    }}</span>
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                  </div>
-                  <div class="stat-content">
-                    <span class="stat-number">10K+</span>
-                    <span class="stat-label">{{
-                      translations["happy_clients"] || "Happy Clients"
-                    }}</span>
-                  </div>
-                </div>
-                <div class="stat-card">
-                  <div class="stat-icon">
-                    <i class="fas fa-star"></i>
-                  </div>
-                  <div class="stat-content">
-                    <span class="stat-number">4.9</span>
-                    <span class="stat-label">{{
-                      translations["rating"] || "Rating"
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Scroll Indicator -->
-          <div class="scroll-indicator" *ngIf="i === 0">
-            <div class="scroll-text">
-              {{ translations["scroll_down"] || "Scroll Down" }}
-            </div>
-            <div class="scroll-line"></div>
-          </div>
-        </div>
-      </ng-template>
-    </swiper>
-
-    <!-- Custom Navigation -->
-    <div class="hero-navigation">
-      <button class="nav-button nav-prev" (click)="previousSlide()">
-        <i class="fas fa-chevron-left"></i>
-      </button>
-      <div class="nav-pagination">
-        <span
-          class="pagination-dot"
-          *ngFor="let slide of heroSlides; let i = index"
-          [class.active]="i === currentSlideIndex"
-          (click)="goToSlide(i)"
-        ></span>
-      </div>
-      <button class="nav-button nav-next" (click)="nextSlide()">
-        <i class="fas fa-chevron-right"></i>
-      </button>
-    </div>
-
-    <!-- Floating Elements for Extra Visual Interest -->
-    <div class="floating-shapes">
-      <div class="shape shape-1"></div>
-      <div class="shape shape-2"></div>
-      <div class="shape shape-3"></div>
-    </div>
-  </section>
-
-  <section class="cars_type py-4 pt-3" *ngIf="categoriesSection">
-    <div class="container-fluid">
-      <div class="head d-flex align-items-center justify-content-between">
-        <h2>{{ categoriesSection.section_title }}</h2>
-        <div class="buttons">
-          <button
-            class="custom-prev-arrow"
-            (click)="carsTypeSwiper.swiperRef.slidePrev()"
-            [attr.aria-label]="translations['previous']"
-          >
-            <i
-              class="fa-solid"
-              [ngClass]="{
-                'fa-chevron-right': this.currentLang === 'ar',
-                'fa-chevron-left': this.currentLang !== 'ar'
-              }"
-            ></i>
-          </button>
-          <button
-            class="custom-next-arrow"
-            (click)="carsTypeSwiper.swiperRef.slideNext()"
-            [attr.aria-label]="translations['next']"
-          >
-            <i
-              class="fa-solid"
-              [ngClass]="{
-                'fa-chevron-left': this.currentLang === 'ar',
-                'fa-chevron-right': this.currentLang !== 'ar'
-              }"
-            ></i>
-          </button>
-        </div>
-      </div>
-
-      <swiper
-        class="mx-2"
-        #carsTypeSwiper
-        [slidesPerView]="7"
-        [slidesPerView]="7.5"
-        [spaceBetween]="0"
-        [navigation]="false"
-        class="mySwiper"
-        [breakpoints]="swiperConfig.breakpoints"
+      <section
+        class="hero_section"
+        [class.social-ltr]="currentLang !== 'ar'"
+        [class.social-rtl]="currentLang === 'ar'"
+        [class.hero-loading]="!headerSection"
+        [class.motion-ready]="motionReady"
       >
-        <ng-template
-          swiperSlide
-          *ngFor="let category of categoriesSection.categories"
+        <!-- Social Icons with Modern Design -->
+        <div
+          class="social-icons-modern"
+          *ngIf="headerSection?.social_media_links"
         >
-          <div
-            class="card_cartype text-center"
-            [routerLink]="['/', currentLang, 'category', category.slug]"
-            [title]="'Browse ' + category.name + ' Cars'"
+          <div class="social-icon-wrapper">
+            <a
+              [href]="headerSection?.social_media_links?.facebook || '#'"
+              target="_blank"
+              [title]="'Follow us on Facebook'"
+              class="social-link"
+            >
+              <i class="fab fa-facebook-f"></i>
+            </a>
+          </div>
+          <div class="social-icon-wrapper">
+            <a
+              [href]="headerSection?.social_media_links?.instagram || '#'"
+              target="_blank"
+              [title]="'Follow us on Instagram'"
+              class="social-link"
+            >
+              <i class="fab fa-instagram"></i>
+            </a>
+          </div>
+          <div class="social-icon-wrapper">
+            <a
+              [href]="headerSection?.social_media_links?.twitter || '#'"
+              target="_blank"
+              [title]="'Follow us on Twitter'"
+              class="social-link"
+            >
+              <i class="fab fa-twitter"></i>
+            </a>
+          </div>
+          <div class="social-icon-wrapper">
+            <a
+              [href]="headerSection?.social_media_links?.snapchat || '#'"
+              target="_blank"
+              [title]="'Follow us on Snapchat'"
+              class="social-link"
+            >
+              <i class="fa-brands fa-snapchat"></i>
+            </a>
+          </div>
+        </div>
+
+        <ng-container *ngIf="heroSlides.length; else heroSkeleton">
+          <!-- Hero Swiper -->
+          <swiper
+            #heroSwiper
+            [config]="heroSwiperConfig"
+            class="hero-swiper"
+            (slideChange)="onSlideChange($event)"
           >
-            <div class="bg_img mb-2">
-              <img
-                [src]="
-                  'https://admin.afandinacarrental.com/storage/' +
-                  category.image
+            <ng-template swiperSlide *ngFor="let slide of heroSlides; let i = index">
+              <div class="hero-slide">
+                <!-- Media Container -->
+                <div class="hero-media-wrapper">
+                  <div class="hero-image-container">
+                    <picture>
+                      <source
+                        *ngIf="slide.optimizedImagePath"
+                        [attr.srcset]="slide.optimizedImagePath"
+                        type="image/webp"
+                      />
+                      <img
+                        [src]="getHeroPrimaryImage(slide)"
+                        [attr.srcset]="getHeroImageSrcSet(slide)"
+                        [attr.sizes]="
+                          getHeroImageSrcSet(slide) ? heroImageSizes : null
+                        "
+                        [alt]="slide.title || 'Afandina Car Rental'"
+                        class="hero-media parallax-image"
+                        [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+                        decoding="async"
+                        [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+                        [attr.data-hero-lcp]="i === 0 ? 'true' : null"
+                      />
+                    </picture>
+                  </div>
+
+                  <video
+                    *ngIf="heroVideoEnabled && shouldRenderVideo(slide, i)"
+                    class="hero-media hero-video"
+                    [class.hero-video-active]="isActiveHeroSlide(i)"
+                    [attr.src]="slide.video_path"
+                    [attr.autoplay]="isActiveHeroSlide(i) ? '' : null"
+                    muted
+                    loop
+                    playsinline
+                    preload="none"
+                    [attr.poster]="getHeroPrimaryImage(slide)"
+                  ></video>
+
+                  <!-- Gradient Overlays to improve text contrast -->
+                  <div class="gradient-overlay"></div>
+                  <div class="gradient-overlay-secondary"></div>
+                </div>
+
+                <!-- Content Container -->
+                <div class="hero-content">
+                  <div class="content-wrapper">
+                    <div class="content-badge" *ngIf="slide.badge">
+                      <span class="badge-text">{{ slide.badge }}</span>
+                    </div>
+
+                    <h1 class="hero-title" *ngIf="slide.title">
+                      {{ slide.title }}
+                    </h1>
+
+                    <p class="hero-description" *ngIf="slide.description">
+                      {{ slide.description }}
+                    </p>
+
+                    <div class="hero-actions" *ngIf="slide.show_cta">
+                      <button class="cta-primary" type="button">
+                        <span>
+                          {{ translations['explore_cars'] || 'Explore Cars' }}
+                        </span>
+                        <i class="fas fa-arrow-right"></i>
+                      </button>
+                      <button class="cta-secondary" type="button">
+                        <span>
+                          {{ translations['learn_more'] || 'Learn More' }}
+                        </span>
+                      </button>
+                    </div>
+
+                    <div class="stats-cards" *ngIf="slide.show_stats">
+                      <div class="stat-card">
+                        <div class="stat-icon">
+                          <i class="fas fa-car"></i>
+                        </div>
+                        <div class="stat-content">
+                          <span class="stat-number">500+</span>
+                          <span class="stat-label">
+                            {{ translations['cars_available'] || 'Cars Available' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="stat-card">
+                        <div class="stat-icon">
+                          <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                          <span class="stat-number">10K+</span>
+                          <span class="stat-label">
+                            {{ translations['happy_clients'] || 'Happy Clients' }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="stat-card">
+                        <div class="stat-icon">
+                          <i class="fas fa-star"></i>
+                        </div>
+                        <div class="stat-content">
+                          <span class="stat-number">4.9</span>
+                          <span class="stat-label">
+                            {{ translations['rating'] || 'Rating' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Scroll Indicator -->
+                <div class="scroll-indicator" *ngIf="i === 0">
+                  <div class="scroll-text">
+                    {{ translations['scroll_down'] || 'Scroll Down' }}
+                  </div>
+                  <div class="scroll-line"></div>
+                </div>
+              </div>
+            </ng-template>
+          </swiper>
+
+          <!-- Custom Navigation -->
+          <div class="hero-navigation">
+            <button class="nav-button nav-prev" (click)="previousSlide()" aria-label="Previous slide">
+              <i
+                [ngClass]="
+                  currentLang === 'ar' ? 'fas fa-chevron-right' : 'fas fa-chevron-left'
                 "
-                class="category-image d-block m-auto position-absolute top-0 start-50 translate-middle"
-                width="150px"
-                height="88"
-                style="object-fit: contain"
-                [alt]="'Car Category - ' + category.name"
-                [title]="category.name"
-                loading="lazy"
-              />
+              ></i>
+            </button>
+            <div class="nav-pagination">
+              <span
+                class="pagination-dot"
+                *ngFor="let slide of heroSlides; let i = index"
+                [class.active]="i === currentSlideIndex"
+                (click)="goToSlide(i)"
+              ></span>
             </div>
-            <h3>{{ category.name }}</h3>
-            <p>{{ category.car_count }}</p>
+            <button class="nav-button nav-next" (click)="nextSlide()" aria-label="Next slide">
+              <i
+                [ngClass]="
+                  currentLang === 'ar' ? 'fas fa-chevron-left' : 'fas fa-chevron-right'
+                "
+              ></i>
+            </button>
+          </div>
+
+          <!-- Floating Elements for Extra Visual Interest -->
+          <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+          </div>
+        </ng-container>
+
+        <ng-template #heroSkeleton>
+          <div class="hero-skeleton">
+            <div class="hero-media-skeleton shimmer"></div>
+            <div class="hero-content-skeleton">
+              <div class="skeleton-line w-25"></div>
+              <div class="skeleton-line w-75"></div>
+              <div class="skeleton-line w-50"></div>
+              <div class="skeleton-cta-group">
+                <div class="skeleton-btn"></div>
+                <div class="skeleton-btn secondary"></div>
+              </div>
+            </div>
           </div>
         </ng-template>
-      </swiper>
-    </div>
-  </section>
+      </section>
 
-  <section class="cars_brand py-4" *ngIf="brandsSection">
-    <div class="container-fluid">
-      <div class="head d-flex align-items-center justify-content-between">
-        <h2>{{ brandsSection.section_title }}</h2>
-        <div class="buttons">
-          <button
-            class="custom-prev-arrow"
-            (click)="carsBrandSwiper.swiperRef.slidePrev()"
-            [attr.aria-label]="translations['previous']"
-          >
-            <i
-              class="fa-solid"
-              [ngClass]="{
-                'fa-chevron-right': this.currentLang === 'ar',
-                'fa-chevron-left': this.currentLang !== 'ar'
-              }"
-            ></i>
-          </button>
-          <button
-            class="custom-next-arrow"
-            (click)="carsBrandSwiper.swiperRef.slideNext()"
-            [attr.aria-label]="translations['next']"
-          >
-            <i
-              class="fa-solid"
-              [ngClass]="{
-                'fa-chevron-left': this.currentLang === 'ar',
-                'fa-chevron-right': this.currentLang !== 'ar'
-              }"
-            ></i>
-          </button>
-        </div>
-      </div>
-
-      <swiper
-        class="mx-2"
-        #carsBrandSwiper
-        [slidesPerView]="7"
-        [spaceBetween]="0"
-        [slidesPerView]="7.5"
-        [navigation]="false"
-        [autoplay]="{ delay: 1000, disableOnInteraction: false }"
-        [loop]="true"
-        class="mySwiper"
-        [breakpoints]="swiperBrand.breakpoints"
-      >
-        <ng-template swiperSlide *ngFor="let brand of brandsSection.brands">
-          <div
-            class="card_cartype text-center card p-2"
-            [routerLink]="['/', currentLang, 'brand', brand.slug]"
-            [title]="'Browse ' + brand.name + ' Cars'"
-          >
-            <div
-              class="d-flex align-items-center justify-content-center"
-              style="height: 110px"
-            >
-              <img
-                [src]="
-                  'https://admin.afandinacarrental.com/storage/' + brand.image
-                "
-                class="d-block m-auto"
-                width="100px"
-                height="75px"
-                [alt]="'Car Brand - ' + brand.name"
-                [title]="'Car Brand - ' + brand.name"
-                loading="lazy"
-              />
+      <section class="cars_type py-4 pt-3 lazy-section" data-defer-target="categories">
+        <ng-container
+          *ngIf="categoriesReady && categoriesSection; else categoriesSkeleton"
+        >
+          <div class="container-fluid">
+            <div class="head d-flex align-items-center justify-content-between">
+              <h2>{{ categoriesSection.section_title }}</h2>
+              <div class="buttons">
+                <button
+                  class="custom-prev-arrow"
+                  (click)="carsTypeSwiper.swiperRef.slidePrev()"
+                  [attr.aria-label]="translations['previous']"
+                >
+                  <i
+                    class="fa-solid"
+                    [ngClass]="{
+                      'fa-chevron-right': this.currentLang === 'ar',
+                      'fa-chevron-left': this.currentLang !== 'ar'
+                    }"
+                  ></i>
+                </button>
+                <button
+                  class="custom-next-arrow"
+                  (click)="carsTypeSwiper.swiperRef.slideNext()"
+                  [attr.aria-label]="translations['next']"
+                >
+                  <i
+                    class="fa-solid"
+                    [ngClass]="{
+                      'fa-chevron-left': this.currentLang === 'ar',
+                      'fa-chevron-right': this.currentLang !== 'ar'
+                    }"
+                  ></i>
+                </button>
+              </div>
             </div>
 
-            <h3>{{ brand.name }}</h3>
-            <p>{{ brand.car_count }}</p>
+            <swiper
+              class="mx-2"
+              #carsTypeSwiper
+              [slidesPerView]="7"
+              [slidesPerView]="7.5"
+              [spaceBetween]="0"
+              [navigation]="false"
+              class="mySwiper"
+              [breakpoints]="swiperConfig.breakpoints"
+            >
+              <ng-template
+                swiperSlide
+                *ngFor="let category of categoriesSection.categories"
+              >
+                <div
+                  class="card_cartype text-center"
+                  [routerLink]="['/', currentLang, 'category', category.slug]"
+                  [title]="'Browse ' + category.name + ' Cars'"
+                >
+                  <div class="bg_img mb-2">
+                    <img
+                      [src]="
+                        'https://admin.afandinacarrental.com/storage/' +
+                        category.image
+                      "
+                      class="category-image d-block m-auto position-absolute top-0 start-50 translate-middle"
+                      width="150px"
+                      height="88"
+                      style="object-fit: contain"
+                      [alt]="'Car Category - ' + category.name"
+                      [title]="category.name"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <h3>{{ category.name }}</h3>
+                  <p>{{ category.car_count }}</p>
+                </div>
+              </ng-template>
+            </swiper>
           </div>
-        </ng-template>
-      </swiper>
-    </div>
-  </section>
+        </ng-container>
+      </section>
 
-  <section class="car_only py-4" *ngIf="specialOffersSection">
+  <ng-template #categoriesSkeleton>
     <div class="container-fluid">
-      <div class="head">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <h2>{{ specialOffersSection.special_offers_title }}</h2>
+      <div class="head d-flex align-items-center justify-content-between">
+        <div class="skeleton-line w-25"></div>
+        <div class="skeleton-controls">
+          <div class="skeleton-btn"></div>
+          <div class="skeleton-btn"></div>
+        </div>
+      </div>
+      <div class="skeleton-carousel">
+        <div
+          class="skeleton-card"
+          *ngFor="let item of skeletonPlaceholders"
+        ></div>
+      </div>
+    </div>
+  </ng-template>
+
+  <section class="cars_brand py-4 lazy-section" data-defer-target="brands">
+    <ng-container *ngIf="brandsReady && brandsSection; else brandsSkeleton">
+      <div class="container-fluid">
+        <div class="head d-flex align-items-center justify-content-between">
+          <h2>{{ brandsSection.section_title }}</h2>
           <div class="buttons">
             <button
               class="custom-prev-arrow"
-              (click)="carsSpecialOffer.swiperRef.slidePrev()"
+              (click)="carsBrandSwiper.swiperRef.slidePrev()"
               [attr.aria-label]="translations['previous']"
             >
               <i
@@ -363,7 +354,7 @@
             </button>
             <button
               class="custom-next-arrow"
-              (click)="carsSpecialOffer.swiperRef.slideNext()"
+              (click)="carsBrandSwiper.swiperRef.slideNext()"
               [attr.aria-label]="translations['next']"
             >
               <i
@@ -376,29 +367,145 @@
             </button>
           </div>
         </div>
-        <p>
-          {{ specialOffersSection.special_offers_section_paragraph }}
-        </p>
+
+        <swiper
+          class="mx-2"
+          #carsBrandSwiper
+          [slidesPerView]="7"
+          [spaceBetween]="0"
+          [slidesPerView]="7.5"
+          [navigation]="false"
+          [autoplay]="{ delay: 1000, disableOnInteraction: false }"
+          [loop]="true"
+          class="mySwiper"
+          [breakpoints]="swiperBrand.breakpoints"
+        >
+          <ng-template swiperSlide *ngFor="let brand of brandsSection.brands">
+            <div
+              class="card_cartype text-center card p-2"
+              [routerLink]="['/', currentLang, 'brand', brand.slug]"
+              [title]="'Browse ' + brand.name + ' Cars'"
+            >
+              <div
+                class="d-flex align-items-center justify-content-center"
+                style="height: 110px"
+              >
+                <img
+                  [src]="
+                    'https://admin.afandinacarrental.com/storage/' + brand.image
+                  "
+                  class="d-block m-auto"
+                  width="100px"
+                  height="75px"
+                  [alt]="'Car Brand - ' + brand.name"
+                  [title]="'Car Brand - ' + brand.name"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
+
+              <h3>{{ brand.name }}</h3>
+              <p>{{ brand.car_count }}</p>
+            </div>
+          </ng-template>
+        </swiper>
       </div>
-      <swiper
-        [slidesPerView]="4.5"
-        [spaceBetween]="0"
-        [navigation]="false"
-        [breakpoints]="swiperCard.breakpoints"
-        [autoplay]="false"
-        class="mx-2 mySwiper"
-        #carsSpecialOffer
-      >
-        <ng-template
+    </ng-container>
+  </section>
+
+  <ng-template #brandsSkeleton>
+    <div class="container-fluid">
+      <div class="head d-flex align-items-center justify-content-between">
+        <div class="skeleton-line w-25"></div>
+        <div class="skeleton-controls">
+          <div class="skeleton-btn"></div>
+          <div class="skeleton-btn"></div>
+        </div>
+      </div>
+      <div class="skeleton-carousel">
+        <div
+          class="skeleton-card"
+          *ngFor="let item of skeletonPlaceholders"
+        ></div>
+      </div>
+    </div>
+  </ng-template>
+
+  <section class="car_only py-4 lazy-section" data-defer-target="specialOffers">
+    <ng-container
+      *ngIf="specialOffersReady && specialOffersSection; else specialOffersSkeleton"
+    >
+      <div class="container-fluid">
+        <div class="head">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h2>{{ specialOffersSection.special_offers_title }}</h2>
+            <div class="buttons">
+              <button
+                class="custom-prev-arrow"
+                (click)="carsSpecialOffer.swiperRef.slidePrev()"
+                [attr.aria-label]="translations['previous']"
+              >
+                <i
+                  class="fa-solid"
+                  [ngClass]="{
+                    'fa-chevron-right': this.currentLang === 'ar',
+                    'fa-chevron-left': this.currentLang !== 'ar'
+                  }"
+                ></i>
+              </button>
+              <button
+                class="custom-next-arrow"
+                (click)="carsSpecialOffer.swiperRef.slideNext()"
+                [attr.aria-label]="translations['next']"
+              >
+                <i
+                  class="fa-solid"
+                  [ngClass]="{
+                    'fa-chevron-left': this.currentLang === 'ar',
+                    'fa-chevron-right': this.currentLang !== 'ar'
+                  }"
+                ></i>
+              </button>
+            </div>
+          </div>
+          <p>
+            {{ specialOffersSection.special_offers_section_paragraph }}
+          </p>
+        </div>
+        <swiper
+          [slidesPerView]="4.5"
+          [spaceBetween]="0"
+          [navigation]="false"
+          [breakpoints]="swiperCard.breakpoints"
+          [autoplay]="false"
+          class="mx-2 mySwiper"
+          #carsSpecialOffer
+        >
+          <ng-template
           swiperSlide
           *ngFor="let car of specialOffersSection.special_offers"
         >
-          <app-card [carData]="car"></app-card>
+          <app-product-card [carData]="car"></app-product-card>
         </ng-template>
-      </swiper>
-      <!-- <a routerLink="" class="View_All">{{ translations['view_all'] }}</a -->
-    </div>
+        </swiper>
+      </div>
+    </ng-container>
   </section>
+
+  <ng-template #specialOffersSkeleton>
+    <div class="container-fluid">
+      <div class="head mb-4">
+        <div class="skeleton-line w-25"></div>
+        <div class="skeleton-line w-50 mt-3"></div>
+      </div>
+      <div class="skeleton-carousel">
+        <div
+          class="skeleton-card"
+          *ngFor="let item of skeletonPlaceholders"
+        ></div>
+      </div>
+    </div>
+  </ng-template>
 
   <section *ngIf="advertisements">
     <div class="container-fluid">
@@ -431,7 +538,7 @@
     </div>
   </section>
 
-  <section class="car_only py-4" *ngIf="onlyOnAfandinaSection">
+  <section class="car_only py-4 lazy-section" *ngIf="onlyOnAfandinaSection">
     <div class="container-fluid">
       <div class="head">
         <div class="d-flex align-items-center justify-content-between mb-2">
@@ -483,7 +590,7 @@
           swiperSlide
           *ngFor="let car of onlyOnAfandinaSection.only_on_afandina"
         >
-          <app-card [carData]="car"></app-card>
+          <app-product-card [carData]="car"></app-product-card>
         </ng-template>
       </swiper>
       <!-- <a routerLink="" class="View_All">{{ translations['view_all'] }}</a -->
@@ -520,7 +627,7 @@
     </div>
   </section>
 
-  <section class="where_find_us_modern py-5">
+  <section class="where_find_us_modern py-5 lazy-section">
     <div class="container-fluid">
       <!-- Section Header -->
       <div class="section-header text-center mb-5">
@@ -549,15 +656,22 @@
           <div class="col-lg-8">
             <div class="map-container">
               <!-- Static image placeholder replacing Google Map -->
-              <img
-                src="assets/images/logo/found-us.png"
-                alt="Find us"
-                title="Find Afandina locations"
-                width="100%"
-                height="600px"
-                class="img-fluid w-100"
-                loading="lazy"
-              />
+              <picture>
+                <source
+                  srcset="assets/images/logo/found-us-optimized.webp"
+                  type="image/webp"
+                />
+                <img
+                  src="assets/images/logo/found-us.png"
+                  alt="Find us"
+                  title="Find Afandina locations"
+                  width="100%"
+                  height="600px"
+                  class="img-fluid w-100"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </picture>
             </div>
           </div>
 
@@ -576,7 +690,7 @@
                     let i = index
                   "
                   [class.active]="selectedLocation?.id === location.id"
-                  (click)="onMarkerClick(mapMarkers[i])"
+                  (click)="selectLocation(location)"
                 >
                   <div class="location-card-header">
                     <div class="location-icon">
@@ -738,7 +852,7 @@
       </div>
     </div>
   </section>
-  <section class="faq">
+  <section class="faq lazy-section lazy-section--short" data-defer-target="faqs">
     <div class="container-fluid">
       <div class="row">
         <!-- FAQ Content Section -->
@@ -794,7 +908,7 @@
     </div>
   </section>
 
-  <section class="why_us py-4" *ngIf="whyChooseUsSection">
+  <section class="why_us py-4 lazy-section lazy-section--short" *ngIf="whyChooseUsSection">
     <div class="container-fluid">
       <div class="row">
         <div class="col-lg-5">
@@ -843,9 +957,16 @@
     </div>
   </section>
 
+  <div
+    class="defer-sentinel"
+    data-defer-target="instagram"
+    aria-hidden="true"
+  ></div>
   <section
-    class="instagram-section py-5"
-    *ngIf="instagramSection.short_videos.length"
+    class="instagram-section py-5 lazy-section lazy-section--short"
+    *ngIf="
+      instagramReady && instagramSection?.short_videos?.length
+    "
   >
     <div class="container-fluid">
       <div class="section-header text-center mb-5">
@@ -868,7 +989,7 @@
         <div
           class="video-card"
           *ngFor="
-            let videoItem of instagramSection.short_videos.slice(0, 3);
+            let videoItem of (instagramSection?.short_videos || []).slice(0, 3);
             let i = index
           "
           [class.video-card-featured]="i === 0"
@@ -943,7 +1064,10 @@
 
       <div class="section-footer text-center mt-5">
         <a
-          [href]="instagramSection.short_videos"
+          [href]="
+            instagramSection?.instagram_link ||
+            'https://www.instagram.com/afandina.carrental/'
+          "
           target="_blank"
           class="instagram-button"
           [title]="translations['view_instagram'] || 'View on Instagram'"
@@ -989,7 +1113,12 @@
     </div>
   </section>
 
-  <section class="car_only py-4" *ngIf="blogs">
+  <div
+    class="defer-sentinel"
+    data-defer-target="blogs"
+    aria-hidden="true"
+  ></div>
+  <section class="car_only py-4 lazy-section" *ngIf="blogs">
     <div class="container-fluid">
       <div class="head">
         <div class="d-flex align-items-center justify-content-between mb-2">

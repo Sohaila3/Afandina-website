@@ -23,7 +23,11 @@
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["src/favicon.ico", "src/assets"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/.htaccess"
+            ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
@@ -33,9 +37,7 @@
               "node_modules/swiper/swiper-bundle.min.css",
               "src/styles.scss"
             ],
-            "scripts": [
-              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
-            ]
+            "scripts": []
           },
           "configurations": {
             "production": {
@@ -45,7 +47,18 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "budgets": [],
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "50kb",
+                  "maximumError": "100kb"
+                }
+              ],
               "outputHashing": "all",
               "optimization": {
                 "scripts": true,
@@ -53,9 +66,16 @@
                   "minify": true,
                   "inlineCritical": true
                 },
-                "fonts": true
+                "fonts": {
+                  "inline": true
+                }
               },
-              "sourceMap": false,
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": true,
+                "vendor": false
+              },
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -63,7 +83,11 @@
               "buildOptimizer": true,
               "deleteOutputPath": true,
               "commonChunk": true,
-              "allowedCommonJsDependencies": ["lodash", "moment"]
+              "allowedCommonJsDependencies": [
+                "lodash",
+                "moment",
+                "bootstrap/dist/js/bootstrap.bundle.min.js"
+              ]
             },
             "development": {
               "buildOptimizer": false,

@@ -4,6 +4,9 @@ import {
   PLATFORM_ID,
   Optional,
   HostListener,
+  AfterViewInit,
+  OnDestroy,
+  OnInit,
 } from '@angular/core';
 import { BrandsSection, CategoriesSection } from './Models/home.model';
 
@@ -22,6 +25,10 @@ import { TranslationService } from './core/services/Translation/translation.serv
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil, finalize } from 'rxjs/operators';
+import { DeferredScriptService } from './core/performance/deferred-script.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-root',
@@ -30,7 +37,7 @@ import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
   title = 'Afandina';
 
   brandsSection!: BrandsSection;
@@ -62,6 +69,10 @@ export class AppComponent {
 
   isLoading$ = this.loaderService.loading$;
 
+  private destroy$ = new Subject<void>();
+  private settingsCache = new Map<string, any>();
+  private settingsRequestInFlight = false;
+
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
 
@@ -79,7 +90,9 @@ export class AppComponent {
 
     private route: ActivatedRoute,
 
-    private router: Router
+    private router: Router,
+    private deferredScriptService: DeferredScriptService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -91,17 +104,55 @@ export class AppComponent {
 
     this.applyLanguageSettings(currentLang);
 
+    // Prime translations immediately for the current language
+    this.loadTranslationsForLang(currentLang);
+
+    // Keep UI in sync when language changes without full page reloads
+    this.languageService.languageChange$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((lang) => {
+        if (!lang || lang === this.currentLang) return;
+        this.currentLang = lang;
+        this.applyLanguageSettings(lang);
+        this.loadTranslationsForLang(lang, true);
+        this.getSettings(true);
+      });
+
     if (isPlatformBrowser(this.platformId)) {
-      this.getSettings();
-
-      this.sharedDataService.categories$.subscribe((res) => {
-        this.sharedDataService.updateCategories(res);
-      });
-
-      this.sharedDataService.brands$.subscribe((res) => {
-        this.sharedDataService.updateBrands(res);
-      });
+      this.scheduleIdleTask(() => this.getSettings(), 300);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.scheduleIdleTask(() => this.deferredScriptService.init(), 0);
+  }
+
+  private loadTranslationsForLang(lang: string, showLoader: boolean = false) {
+    // fetch lightweight locale file from assets to avoid waiting on settings API
+    if (showLoader) {
+      this.loaderService.show(800);
+    }
+
+    this.http
+      .get<Record<string, string>>(`/assets/i18n/${lang}.json`)
+      .pipe(
+        takeUntil(this.destroy$),
+        finalize(() => {
+          if (showLoader) {
+            this.loaderService.hide();
+          }
+        })
+      )
+      .subscribe(
+        (data) => {
+          this.translationService.setTranslations(data || {});
+          this.translationService.setCurrentLang(lang);
+        },
+        () => {
+          // fallback: keep existing translations but still update current lang
+          this.translationService.setCurrentLang(lang);
+        }
+      );
   }
 
   applyLanguageSettings(newLang: any) {
@@ -143,41 +194,70 @@ export class AppComponent {
     }
   }
 
-  getSettings() {
-    this.homeService.getSettings().subscribe((res: any) => {
-      this.settings = res;
-      this.dark_logo = res.data.main_setting.dark_logo;
-      this.light_logo = res.data.main_setting.light_logo;
-      this.black_logo = res.data.main_setting.black_logo;
-      this.favicon = res.data.main_setting.favicon;
-      this.phoneNumber = res.data.main_setting.contact_data.phone;
+  getSettings(force: boolean = false) {
+    const lang = this.languageService.getCurrentLanguage();
 
-      this.languages = res.data.main_setting.languages;
-      this.contactData = res.data.main_setting.contact_data;
+    if (!force && this.settingsCache.has(lang)) {
+      this.applySettings(this.settingsCache.get(lang));
+      return;
+    }
 
-      this.languageService.setLanguages(this.languages);
-      this.sharedDataService.contactData(this.contactData);
+    if (this.settingsRequestInFlight && !force) {
+      return;
+    }
 
-      const translationData = res.data.main_setting.translation_data;
-      this.translationService.setTranslations(translationData);
+    this.settingsRequestInFlight = true;
 
-      if (isPlatformBrowser(this.platformId)) {
-        this.updateIconHref();
-      }
-
-      const defaultCurrency = this.currencies.find(
-        (currency: any) => currency.is_default === 1
+    this.homeService
+      .getSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(
+        (res: any) => {
+          this.settingsRequestInFlight = false;
+          this.settingsCache.set(lang, res);
+          this.applySettings(res);
+        },
+        () => {
+          this.settingsRequestInFlight = false;
+        }
       );
+  }
 
-      if (defaultCurrency && isPlatformBrowser(this.platformId)) {
-        localStorage.setItem('currentCurrency', defaultCurrency.id.toString());
-        localStorage.setItem('currencyCode', defaultCurrency.code);
-        localStorage.setItem('currency_name', defaultCurrency.name);
+  private applySettings(res: any) {
+    if (!res?.data?.main_setting) return;
 
-        this.languageService.setCurrentCurrency(defaultCurrency.id.toString());
-        this.languageService.setCurrentCurrencyCode(defaultCurrency.code);
-      }
-    });
+    this.settings = res;
+    this.dark_logo = res.data.main_setting.dark_logo;
+    this.light_logo = res.data.main_setting.light_logo;
+    this.black_logo = res.data.main_setting.black_logo;
+    this.favicon = res.data.main_setting.favicon;
+    this.phoneNumber = res.data.main_setting.contact_data.phone;
+
+    this.languages = res.data.main_setting.languages;
+    this.contactData = res.data.main_setting.contact_data;
+
+    this.languageService.setLanguages(this.languages);
+    this.sharedDataService.contactData(this.contactData);
+
+    const translationData = res.data.main_setting.translation_data;
+    this.translationService.setTranslations(translationData);
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.updateIconHref();
+    }
+
+    const defaultCurrency = this.currencies.find(
+      (currency: any) => currency.is_default === 1
+    );
+
+    if (defaultCurrency && isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('currentCurrency', defaultCurrency.id.toString());
+      localStorage.setItem('currencyCode', defaultCurrency.code);
+      localStorage.setItem('currency_name', defaultCurrency.name);
+
+      this.languageService.setCurrentCurrency(defaultCurrency.id.toString());
+      this.languageService.setCurrentCurrencyCode(defaultCurrency.code);
+    }
   }
 
   updateIconHref() {
@@ -226,5 +306,23 @@ export class AppComponent {
       top: 0,
       behavior: 'smooth',
     });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private scheduleIdleTask(task: () => void, timeout = 1200) {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const win = window as any;
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(() => task(), { timeout });
+    } else {
+      setTimeout(() => task(), timeout);
+    }
   }
 }

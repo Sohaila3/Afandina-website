@@ -126,6 +126,7 @@ export interface HomeResponse {
   export interface InstagramSection {
     short_videos_title: string;
     short_videos: any[];
+    instagram_link?: string;
   }
   
   export interface FooterSection {

@@ -73,6 +73,16 @@ export class LanguageComponent implements OnInit, OnDestroy {
     this.currentLangName = langData ? langData.name : this.currentLang;
   }
 
+  get nextLanguageCode(): string {
+    return this.currentLang === 'ar' ? 'en' : 'ar';
+  }
+
+  get nextLanguageName(): string {
+    const target = this.nextLanguageCode;
+    const langData = this.languages.find((l) => l.code === target);
+    return langData ? langData.name : target;
+  }
+
   getLanguageUrl(langCode: string): string {
     if (!this.isBrowser) return '';
 
@@ -96,41 +106,27 @@ export class LanguageComponent implements OnInit, OnDestroy {
   changeLanguage(newLang: string): void {
     if (!this.isBrowser || this.currentLang === newLang) return;
 
-    // Get the new URL with the language code
     const newUrl = this.getLanguageUrl(newLang);
-
-    // Update the language in the service
     this.languageService.setCurrentLanguage(newLang);
 
-    // Navigate to the new URL
+    // Apply direction immediately to prevent layout flicker
+    this.applyLanguageSettings(newLang);
+    this.currentLang = newLang;
+    this.updateCurrentLangName();
+
+    // Force a full reload so all SSR-managed assets and data pick the new language
     window.location.href = newUrl;
   }
 
   toggleLanguage(): void {
     if (!this.isBrowser) return;
-    const newLang = this.currentLang === 'ar' ? 'en' : 'ar';
+    const newLang = this.nextLanguageCode;
 
     // Prevent no-op
     if (newLang === this.currentLang) return;
 
-    // Update service and persist
-    this.languageService.setCurrentLanguage(newLang);
-    try {
-      localStorage.setItem('lang', newLang);
-    } catch (e) {
-      // ignore localStorage errors
-    }
-
-    // Apply direction and attributes immediately
-    this.applyLanguageSettings(newLang);
-
-    // Update current language and name
-    this.currentLang = newLang;
-    this.updateCurrentLangName();
-
-    // Navigate to the equivalent URL with the new language code
-    const newUrl = this.getLanguageUrl(newLang);
-    window.location.href = newUrl;
+    // Use the same flow as manual selection
+    this.changeLanguage(newLang);
   }
 
   private applyLanguageSettings(langCode: string): void {

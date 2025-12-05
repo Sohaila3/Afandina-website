@@ -6,11 +6,11 @@
         <div class="head d-flex align-items-center justify-content-between">
             <h2>{{categoriesSection.section_title}}</h2>
             <div class="buttons">
-                <button class="custom-prev-arrow" (click)="carsTypeSwiper.swiperRef.slidePrev()">
+                <button class="custom-prev-arrow" (click)="carsTypeSwiper.swiperRef.slidePrev()" aria-label="Previous category">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-right': this.currentLang === 'ar', 'fa-chevron-left': this.currentLang !== 'ar' }"></i>
                 </button>
-                <button class="custom-next-arrow" (click)="carsTypeSwiper.swiperRef.slideNext()">
+                <button class="custom-next-arrow" (click)="carsTypeSwiper.swiperRef.slideNext()" aria-label="Next category">
                     <i class="fa-solid "
                         [ngClass]="{ 'fa-chevron-left': this.currentLang === 'ar', 'fa-chevron-right': this.currentLang !== 'ar' }"></i>
                 </button>
@@ -36,12 +36,24 @@
 </section>
 <section class="blog_list pt-4 pb-4 mx-4">
     <div class="container-fluid">
-        <div class="row" *ngIf="categoryDetails.cars && categoryDetails.cars.length > 0">
-            <div class="col-lg-3 col-md-4 col-sm-6 mb-3 p-0" *ngFor="let car of categoryDetails.cars">
-                <app-card [carData]="car"></app-card>
+        <div class="row" *ngIf="loadingCategory">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3 p-0" *ngFor="let _ of skeletonPlaceholders">
+                <div class="card-skeleton">
+                    <div class="skeleton-image"></div>
+                    <div class="skeleton-lines">
+                        <div class="line short"></div>
+                        <div class="line long"></div>
+                        <div class="line medium"></div>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="row" *ngIf="!categoryDetails.cars || categoryDetails.cars.length === 0">
+        <div class="row" *ngIf="!loadingCategory && categoryDetails.cars && categoryDetails.cars.length > 0">
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-3 p-0" *ngFor="let car of categoryDetails.cars">
+                <app-product-card [carData]="car"></app-product-card>
+            </div>
+        </div>
+        <div class="row" *ngIf="!loadingCategory && (!categoryDetails.cars || categoryDetails.cars.length === 0)">
             <div class="col-12 text-center py-5">
                 <div class="no-cars-message">
                     <i class="fa-solid fa-car-rear mb-3" style="font-size: 48px; color: #ccc;"></i>

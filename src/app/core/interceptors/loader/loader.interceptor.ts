@@ -21,9 +21,13 @@ import { LoaderService } from '../../services/loader/loader.service';
 
 export class LoaderInterceptor implements HttpInterceptor {
 
-  private excludedUrl = '/api/contact-us/send-message';
-
-  private excludedUrl2 = '/api/search';
+  private readonly silentEndpoints = [
+    '/api/contact-us/send-message',
+    '/api/search',
+    // backend filter endpoints - avoid showing global overlay for product list/filter calls
+    'advanced-search',
+    'advanced-search-setting',
+  ];
 
 
 
@@ -33,13 +37,16 @@ export class LoaderInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
 
-    const shouldShowLoader = !req.url.includes(this.excludedUrl);
+    const shouldBypass = this.silentEndpoints.some((endpoint) => req.url.includes(endpoint));
 
-    const shouldShowLoader2 = !req.url.includes(this.excludedUrl2);
+    // allow callers to explicitly opt-out of the global loader by sending this header
+    const hasSkipHeader = req.headers ? req.headers.has('x-skip-loader') : false;
+
+    const shouldShowLoader = req.method !== 'GET' && !shouldBypass && !hasSkipHeader;
 
 
 
-    if (shouldShowLoader && shouldShowLoader2) {
+    if (shouldShowLoader) {
 
       this.loaderService.show();
 

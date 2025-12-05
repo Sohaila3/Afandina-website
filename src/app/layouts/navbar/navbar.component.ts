@@ -1,9 +1,12 @@
 import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   HostListener,
   Inject,
   Input,
+  OnDestroy,
   PLATFORM_ID,
   ViewChild,
 } from '@angular/core';
@@ -18,17 +21,20 @@ import {
   CategoriesSection,
   LocationSection,
 } from 'src/app/Models/home.model';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnDestroy {
   @Input() brands: any;
-  brandsSection!: BrandsSection;
-  categoriesSection!: CategoriesSection;
-  locationSection!: LocationSection;
+  brandsSection: BrandsSection | null = null;
+  categoriesSection: CategoriesSection | null = null;
+  locationSection: LocationSection | null = null;
 
   @Input() light_logo!: string;
   @Input() dark_logo!: string;
@@ -51,18 +57,22 @@ export class NavbarComponent {
   isScrolled: boolean = false;
 
   locations: any;
+  private destroy$ = new Subject<void>();
   constructor(
     private router: Router,
     private languageService: LanguageService,
     private homeService: HomeService,
     private translationService: TranslationService,
     @Inject(PLATFORM_ID) private platformId: Object,
-    public sharedDataService: SharedDataService
+    public sharedDataService: SharedDataService,
+    private cdr: ChangeDetectorRef
   ) {
     if (isPlatformBrowser(this.platformId)) {
-      this.router.events.subscribe(() => {
-        this.closeNavbar();
-      });
+      this.router.events
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.closeNavbar();
+        });
       this.isMobile = window.innerWidth <= 768;
     }
   }
@@ -73,27 +83,52 @@ export class NavbarComponent {
 
   ngOnInit(): void {
     this.currentLang = this.languageService.getCurrentLanguage();
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.currentLang = this.languageService.getCurrentLanguage();
-      }
-    });
+    // React instantly to language toggles without waiting for navigation
+    this.languageService.languageChange$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((lang) => {
+        if (!lang || lang === this.currentLang) return;
+        this.currentLang = lang;
+        this.cdr.markForCheck();
+      });
+
+    this.router.events
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => {
+        if (event instanceof NavigationEnd) {
+          this.currentLang = this.languageService.getCurrentLanguage();
+          this.cdr.markForCheck();
+        }
+      });
     if (isPlatformBrowser(this.platformId)) {
-      this.translationService.getTranslations().subscribe((data) => {
-        this.translations = data;
-      });
+      this.translationService
+        .getTranslations()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((data) => {
+          this.translations = data;
+          this.cdr.markForCheck();
+        });
 
-      this.sharedDataService.categories$.subscribe((res) => {
-        this.categoriesSection = res;
-      });
+      this.sharedDataService.categories$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((res) => {
+          this.categoriesSection = res;
+          this.cdr.markForCheck();
+        });
 
-      this.sharedDataService.brands$.subscribe((res) => {
-        this.brandsSection = res;
-      });
+      this.sharedDataService.brands$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((res) => {
+          this.brandsSection = res;
+          this.cdr.markForCheck();
+        });
 
-      this.sharedDataService.locations$.subscribe((res) => {
-        this.locationSection = res;
-      });
+      this.sharedDataService.locations$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((res) => {
+          this.locationSection = res;
+          this.cdr.markForCheck();
+        });
     }
   }
 
@@ -139,6 +174,10 @@ export class NavbarComponent {
     if (event) {
       event.preventDefault();
     }
+    // ensure custom mega-menus close whenever nav collapses
+    this.isBrandDropdownVisible = false;
+    this.isCategoryDropdownVisible = false;
+    this.isLocationDropdownVisible = false;
     if (
       isPlatformBrowser(this.platformId) &&
       this.navbarCollapse?.nativeElement
@@ -148,6 +187,8 @@ export class NavbarComponent {
         this.isDropdownVisible = false;
       }
     }
+    // trigger OnPush check
+    this.cdr.markForCheck();
   }
 
   // closeNavbar() {
@@ -170,18 +211,23 @@ export class NavbarComponent {
   Search(event: any): void {
     const search_key = event.target.value;
     if (search_key && search_key.trim() !== '') {
-      this.homeService.getSearch({ query: search_key }).subscribe(
-        (res: any) => {
-          this.searchResults = res.data;
-          this.showDropdown = true;
-        },
-        (error) => {
-          // handle error
-        }
-      );
+      this.homeService
+        .getSearch({ query: search_key })
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(
+          (res: any) => {
+            this.searchResults = res.data;
+            this.showDropdown = true;
+            this.cdr.markForCheck();
+          },
+          () => {
+            // handle error
+          }
+        );
     } else {
       this.showDropdown = false;
       this.searchResults = [];
+      this.cdr.markForCheck();
     }
   }
 
@@ -207,6 +253,7 @@ export class NavbarComponent {
   onResize() {
     if (isPlatformBrowser(this.platformId)) {
       this.isMobile = window.innerWidth <= 768;
+      this.cdr.markForCheck();
     }
   }
 
@@ -218,5 +265,11 @@ export class NavbarComponent {
       window.pageYOffset || document.documentElement.scrollTop || 0;
     // Threshold can be adjusted as needed
     this.isScrolled = offset > 60;
+    this.cdr.markForCheck();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

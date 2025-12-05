@@ -53,9 +53,8 @@
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarSupportedContent"
-          aria-controls="navbarSupportedContent"
-          aria-expanded="false"
-          aria-label="Toggle navigation"
+          aria-label="Toggle navigation menu"
+          title="Toggle navigation menu"
         >
           <span class="toggler-icon"></span>
           <span class="toggler-icon"></span>
@@ -120,6 +119,9 @@
                 type="button"
                 (click)="toggleDropdown('brand')"
                 [title]="translations['brands']"
+                aria-haspopup="true"
+                [attr.aria-expanded]="isBrandDropdownVisible"
+                aria-controls="brandMenu"
               >
                 {{ translations["brands"] }}
               </button>
@@ -127,12 +129,13 @@
                 class="brand-menu"
                 [class.show]="isBrandDropdownVisible"
                 role="menu"
+                id="brandMenu"
               >
                 <div class="brands">
                   <div class="row">
                     <div
                       class="col-xl-3 col-md-4 col-sm-6 col-6"
-                      *ngFor="let brand of brandsSection.brands"
+                      *ngFor="let brand of brandsSection?.brands"
                     >
                       <a
                         class="d-flex align-items-center p-2 contnet"
@@ -144,15 +147,13 @@
                           class="d-flex align-items-center justify-content-center"
                         >
                           <img
-                            [src]="
-                              'https://admin.afandinacarrental.com/storage/' +
-                              brand.image
-                            "
+                            [src]="'https://admin.afandinacarrental.com/storage/' + brand.image"
                             class="d-block m-auto"
                             width="30px"
                             height="30px"
                             [alt]="brand.name"
                             [title]="brand.name"
+                            loading="lazy"
                           />
                         </div>
                         <div>
@@ -186,6 +187,9 @@
                 type="button"
                 (click)="toggleDropdown('category')"
                 [title]="translations['categories']"
+                aria-haspopup="true"
+                [attr.aria-expanded]="isCategoryDropdownVisible"
+                aria-controls="categoryMenu"
               >
                 {{ translations["categories"] }}
               </button>
@@ -193,12 +197,13 @@
                 class="category-menu"
                 [class.show]="isCategoryDropdownVisible"
                 role="menu"
+                id="categoryMenu"
               >
                 <div class="Categories">
                   <div class="row">
                     <div
                       class="col-xl-3 col-md-4 col-sm-6 col-6"
-                      *ngFor="let category of categoriesSection.categories"
+                      *ngFor="let category of categoriesSection?.categories"
                     >
                       <a
                         class="d-flex align-items-center p-2 contnet"
@@ -215,15 +220,13 @@
                           class="d-flex align-items-center justify-content-center"
                         >
                           <img
-                            [src]="
-                              'https://admin.afandinacarrental.com/storage/' +
-                              category.image
-                            "
+                            [src]="'https://admin.afandinacarrental.com/storage/' + category.image"
                             class="d-block m-auto"
                             width="120px"
                             height="60px"
                             [alt]="category.name"
                             [title]="category.name"
+                            loading="lazy"
                           />
                         </div>
                         <div>
@@ -257,6 +260,9 @@
                 type="button"
                 (click)="toggleDropdown('location')"
                 [title]="translations['locations']"
+                aria-haspopup="true"
+                [attr.aria-expanded]="isLocationDropdownVisible"
+                aria-controls="locationMenu"
               >
                 {{ translations["locations"] }}
               </button>
@@ -264,12 +270,13 @@
                 class="category-menu"
                 [class.show]="isLocationDropdownVisible"
                 role="menu"
+                id="locationMenu"
               >
                 <div class="Categories">
                   <div class="row">
                     <div
                       class="col-xl-3 col-md-4 col-sm-6 col-6"
-                      *ngFor="let location of locationSection.locations"
+                      *ngFor="let location of locationSection?.locations"
                     >
                       <a
                         class="d-flex align-items-center p-2 contnet"
@@ -333,3 +340,6 @@
     <app-search></app-search>
   </div>
 </nav>
+
+<!-- Placeholder keeps layout stable when navbar is absolutely positioned on home -->
+<div class="navbar-placeholder" *ngIf="isHomePage()" aria-hidden="true"></div>

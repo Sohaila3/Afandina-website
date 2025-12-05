@@ -1,19 +1,37 @@
 import { Options } from '@angular-slider/ngx-slider';
-import { Component } from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { map, shareReplay, takeUntil } from 'rxjs/operators';
 import { LanguageService } from 'src/app/core/services/language.service';
 import { TranslationService } from 'src/app/core/services/Translation/translation.service';
 import { FilterData } from 'src/app/Models/filterData.model';
+import { SharedDataService } from 'src/app/services/SharedDataService/shared-data-service.service';
 import { ProductService } from 'src/app/services/product/product.service';
 
 @Component({
   selector: 'app-product-filter',
   templateUrl: './product-filter.component.html',
-  styleUrls: ['./product-filter.component.scss']
+  styleUrls: ['./product-filter.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductFilterComponent {
+export class ProductFilterComponent implements OnInit, OnDestroy {
   filterData: any;
+  loadingProducts = true;
+  readonly pageSize = 20;
+  currentIndex = 0;
+  showSeeMore = false;
+  private readonly destroy$ = new Subject<void>();
+  private readonly carsCacheKey = '__allCars$';
+
   productFilterForm: FormGroup;
   activePanels: number[] = [];
   isArabic: boolean = false;
@@ -33,8 +51,12 @@ export class ProductFilterComponent {
   selectedBrands: number[] = [];
   selectedColors: number[] = [];
   selectedTransmissions: number[] = [];
+  allCars: any[] = [];
+  filteredCars: any[] = [];
+  visibleCars: any[] = [];
   productFilter?: FilterData;
   currentLang: string = 'en';
+  private isAllCarsRoute = false;
   constructor(
     private productService: ProductService,
     private fb: FormBuilder,
@@ -42,7 +64,8 @@ export class ProductFilterComponent {
     private languageService: LanguageService,
     private router: Router,
     private translationService: TranslationService,
-
+    private sharedDataService: SharedDataService,
+    private cdr: ChangeDetectorRef,
 
   ) {
     this.productFilterForm = this.fb.group({
@@ -69,13 +92,18 @@ export class ProductFilterComponent {
 
 
   ngOnInit() {
-    this.translationService.getTranslations().subscribe((data) => {
-      this.translations = data;
-    });
+    this.translationService
+      .getTranslations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => {
+        this.translations = data;
+        this.cdr.markForCheck();
+      });
     this.currentLang = this.languageService.getCurrentLanguage();
-    this.router.events.subscribe((event) => {
+    this.router.events.pipe(takeUntil(this.destroy$)).subscribe((event) => {
       if (event instanceof NavigationEnd) {
         this.currentLang = this.languageService.getCurrentLanguage();
+        this.cdr.markForCheck();
       }
     });
     // Assuming you have a dynamic panel count (e.g., from an array of data)
@@ -83,14 +111,13 @@ export class ProductFilterComponent {
     this.activePanels = Array.from({ length: numberOfPanels }, (_, index) => index);
     
     // Check if we're on the all-cars route
-    const isAllCarsRoute = this.router.url.includes('/all-cars');
+    this.isAllCarsRoute = this.router.url.includes('/all-cars');
     
-    if (isAllCarsRoute) {
-      // For "all cars" page, clear all filters to show all cars
-      this.clearFilter();
+    if (this.isAllCarsRoute) {
+      this.loadAllCars();
     } else {
       // For the search page, apply filters based on query params
-      this.route.queryParams.subscribe(params => {
+      this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
         if (params['category']) {
           this.selectedCategories = [parseInt(params['category'], 10)];
         }
@@ -98,13 +125,24 @@ export class ProductFilterComponent {
           this.selectedBrands = [parseInt(params['brand'], 10)];
         }
         
-        // Trigger the filter with the selected values
-        this.submitFilter();
+          // Immediately show loading state to avoid empty-state flash
+          this.loadingProducts = true;
+          this.cdr.markForCheck();
+
+          // Trigger the filter with the selected values
+          this.submitFilter();
       });
     }
 
     this.getFilterData();
-    // Don't submit filter here unconditionally as it would override clearFilter() for all-cars page
+  }
+
+
+  /**
+   * trackBy function for product list to reduce re-renders
+   */
+  trackByCar(_index: number, item: any) {
+    return item?.id ?? item?.slug ?? _index;
   }
 
 
@@ -114,6 +152,89 @@ export class ProductFilterComponent {
       this.productFilter = res;
     });
   }
+
+  private loadAllCars(): void {
+    this.loadingProducts = true;
+    this.getCachedCars$()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (cars: any[]) => {
+          this.allCars = cars;
+          this.filteredCars = cars;
+          this.resetPagination();
+          this.appendNextPage(true);
+          this.loadingProducts = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loadingProducts = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private getCachedCars$() {
+    const store = this.sharedDataService as any;
+    if (!store[this.carsCacheKey]) {
+      const filters = { page: 1, per_page: 500 };
+      store[this.carsCacheKey] = this.productService
+        .getFilteredProducts({ filters })
+        .pipe(
+          map((res) => (Array.isArray(res?.data) ? res.data : [])),
+          shareReplay(1)
+        );
+    }
+    return store[this.carsCacheKey];
+  }
+
+  private applyFilters(): void {
+    if (!this.allCars.length) {
+      return;
+    }
+    this.filteredCars = this.allCars.filter((car) => this.matchesFilters(car));
+    this.resetPagination();
+    this.appendNextPage(true);
+  }
+
+  private matchesFilters(car: any): boolean {
+    const matchesCategory =
+      !this.selectedCategories.length ||
+      this.selectedCategories.includes(Number(car?.category_id ?? car?.category?.id));
+    const matchesBrand =
+      !this.selectedBrands.length ||
+      this.selectedBrands.includes(Number(car?.brand_id ?? car?.brand?.id));
+    const matchesColor =
+      !this.selectedColors.length ||
+      this.selectedColors.includes(Number(car?.color_id ?? car?.color?.id));
+    const matchesTransmission =
+      !this.selectedTransmissions.length ||
+      this.selectedTransmissions.includes(Number(car?.gear_type_id ?? car?.gear_type));
+    const dailyPrice = Number(car?.daily_main_price ?? car?.daily_price ?? 0);
+    const matchesPrice = dailyPrice >= this.minValue && dailyPrice <= this.maxValue;
+    return (
+      matchesCategory &&
+      matchesBrand &&
+      matchesColor &&
+      matchesTransmission &&
+      matchesPrice
+    );
+  }
+
+  private resetPagination(): void {
+    this.currentIndex = 0;
+    this.visibleCars = [];
+    this.showSeeMore = false;
+  }
+
+  private appendNextPage(isInitial = false): void {
+    const nextIndex = Math.min(this.currentIndex + this.pageSize, this.filteredCars.length);
+    const nextSlice = this.filteredCars.slice(this.currentIndex, nextIndex);
+    this.visibleCars = isInitial ? nextSlice : [...this.visibleCars, ...nextSlice];
+    this.currentIndex = nextIndex;
+    this.showSeeMore = this.currentIndex < this.filteredCars.length;
+    this.cdr.markForCheck();
+  }
+
 
 
 
@@ -183,11 +304,34 @@ updateSelectedTransmissions(id: number, event: Event) {
       color_id: this.selectedColors,
       gear_type_id: this.selectedTransmissions,
       daily_main_price: [this.minValue, this.maxValue],
+      page: 1,
+      per_page: 500,
     };
 
-    this.productService.getFilteredProducts({ filters }).subscribe((res) => {
-      this.filterData = res.data;
-    });
+    this.loadingProducts = true;
+    this.productService.getFilteredProducts({ filters }).subscribe(
+      (res) => {
+        const list = Array.isArray(res.data) ? res.data : [];
+
+        if (this.isAllCarsRoute) {
+          // server-side filtered list for all-cars page, then paginate client-side
+          this.allCars = list;
+          this.filteredCars = list;
+          this.resetPagination();
+          this.appendNextPage(true);
+        } else {
+          this.visibleCars = list;
+          this.showSeeMore = false;
+        }
+
+        this.loadingProducts = false;
+        this.cdr.markForCheck();
+      },
+      () => {
+        this.loadingProducts = false;
+        this.cdr.markForCheck();
+      }
+    );
   }
 
   clearFilter() {
@@ -197,13 +341,17 @@ updateSelectedTransmissions(id: number, event: Event) {
     this.selectedTransmissions = []; 
     this.minValue = 100;
     this.maxValue = 30000;
-    
-    // Use an empty filters object to get all cars without any filtering
-    const filters = {};
-    
-    this.productService.getFilteredProducts({ filters }).subscribe((res) => {
-      this.filterData = res.data;
-    });
+
+    this.submitFilter();
+  }
+
+  showMore(): void {
+    this.appendNextPage();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
   
 

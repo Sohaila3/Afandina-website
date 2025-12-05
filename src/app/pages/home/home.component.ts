@@ -1,10 +1,13 @@
 import {
   Component,
-  Input,
   OnInit,
   ViewChild,
   AfterViewInit,
   OnDestroy,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Inject,
+  PLATFORM_ID,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { LanguageService } from 'src/app/core/services/language.service';
@@ -29,24 +32,12 @@ import {
 import { HomeService } from 'src/app/services/home/home.service';
 import { SeoService } from 'src/app/services/seo/seo.service';
 import { SharedDataService } from 'src/app/services/SharedDataService/shared-data-service.service';
-import SwiperCore, {
-  Autoplay,
-  EffectFade,
-  Pagination,
-  Navigation,
-  Parallax,
-} from 'swiper';
-import { SwiperOptions } from 'swiper';
+import type { SwiperOptions } from 'swiper/types';
 import { SwiperComponent } from 'swiper/angular';
-import { isPlatformBrowser, isPlatformServer } from '@angular/common';
-import { Inject, PLATFORM_ID } from '@angular/core';
-import { GoogleMapsModule, GoogleMap } from '@angular/google-maps';
-
-// Declare google maps
-declare var google: any;
-
-// Install Swiper modules
-SwiperCore.use([Autoplay, EffectFade, Pagination, Navigation, Parallax]);
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
+import { TransferState, makeStateKey } from '@angular/platform-browser';
+import { Subject } from 'rxjs';
+import { filter, take, takeUntil } from 'rxjs/operators';
 
 // Interface for Hero Slides
 interface HeroSlide {
@@ -54,6 +45,7 @@ interface HeroSlide {
   media_type: 'video' | 'image';
   video_path?: string;
   image_path?: string;
+  optimizedImagePath?: string;
   title?: string;
   description?: string;
   badge?: string;
@@ -73,20 +65,42 @@ interface Location {
   email?: string;
 }
 
+type DeferredSectionKey = 'categories' | 'brands' | 'specialOffers';
+
+const HOME_STATE_KEY = makeStateKey<HomeResponse>('home-response');
+
 @Component({
   selector: 'app-home',
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('heroSwiper') heroSwiper?: SwiperComponent;
-  @ViewChild('googleMap') googleMap?: GoogleMap;
 
   // ============================================
   // HERO SECTION PROPERTIES
   // ============================================
   heroSlides: HeroSlide[] = [];
   currentSlideIndex: number = 0;
+  heroImageSizes: string = '(max-width: 768px) 100vw, 100vw';
+  readonly skeletonPlaceholders = Array.from({ length: 6 }, (_, index) => index);
+  categoriesReady = false;
+  brandsReady = false;
+  specialOffersReady = false;
+  private intersectionObservers: IntersectionObserver[] = [];
+  private belowFoldObservers: IntersectionObserver[] = [];
+  private belowFoldLoads = new Map<string, boolean>();
+  private readonly isBrowserEnv: boolean;
+  private readonly heroFallbackImage = '/assets/images/logo/car3-optimized.webp';
+  private readonly heroVideoEnableDelay = 4500;
+  private performanceObservers: PerformanceObserver[] = [];
+  private swiperModulesRegistered = false;
+  private swiperModuleInitPromise?: Promise<void>;
+  private homeRequestInFlight = false;
+  private homeCache = new Map<string, HomeResponse>();
+  private blogsRequested = false;
+  private faqsRequested = false;
 
   // Hero Swiper Configuration
   heroSwiperConfig: SwiperOptions = {
@@ -113,20 +127,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   // ============================================
-  // MAP PROPERTIES (NEW)
-  // ============================================
-  mapCenter = { lat: 25.2048, lng: 55.2708 }; // Dubai coordinates
-  mapZoom = 11;
-  mapMarkers: any[] = [];
-  selectedLocation: Location | null = null;
-
-  // ============================================
   // EXISTING PROPERTIES
   // ============================================
   searchTab!: SearchTab;
-  headerSection!: HeaderSection;
-  brandsSection!: BrandsSection;
-  categoriesSection!: CategoriesSection;
+  headerSection: HeaderSection | null = null;
+  brandsSection: BrandsSection | null = null;
+  categoriesSection: CategoriesSection | null = null;
   onlyOnAfandinaSection!: AfandinaSection;
   specialOffersSection!: SpecialOffersSection;
   whyChooseUsSection!: WhyChooseUsSection;
@@ -134,13 +140,20 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   faqsSection!: any;
   locationSection!: LocationSection;
   documentSection!: DocumentSection;
-  instagramSection!: InstagramSection;
+  instagramSection: InstagramSection | null = null;
+  instagramReady = false;
   footerSection!: FooterSection;
   advertisements!: Advertisements;
   where_find_us: any;
   currentLang: string = 'en';
   translations: Record<string, string> = {};
   isPlaying: { [key: string]: boolean } = {};
+  selectedLocation: Location | null = null;
+  private destroy$ = new Subject<void>();
+  private heroPreloadLink?: HTMLLinkElement | null;
+  motionReady = false;
+  private canUseHeroVideo = true;
+  heroVideoEnabled = false;
 
   // Existing Swiper Configurations
   swiperConfig: any = {
@@ -199,8 +212,20 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     private languageService: LanguageService,
     private router: Router,
     private translationService: TranslationService,
-    private seo: SeoService
-  ) {}
+    private seo: SeoService,
+    private cdr: ChangeDetectorRef,
+    @Inject(DOCUMENT) private document: Document,
+    private transferState: TransferState
+  ) {
+    this.isBrowserEnv = isPlatformBrowser(platformId);
+    this.instagramReady = !this.isBrowserEnv;
+    if (!this.isBrowserEnv) {
+      this.categoriesReady = true;
+      this.brandsReady = true;
+      this.specialOffersReady = true;
+    }
+    this.prepareHeroSlides();
+  }
 
   // ============================================
   // LIFECYCLE HOOKS
@@ -208,37 +233,49 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.currentLang = this.languageService.getCurrentLanguage();
 
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.currentLang = this.languageService.getCurrentLanguage();
+    if (isPlatformBrowser(this.platformId)) {
+      this.evaluateHeroVideoSupport();
+    }
+
+    this.router.events
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => {
+        if (event instanceof NavigationEnd) {
+          this.currentLang = this.languageService.getCurrentLanguage();
+          this.loadTranslations();
+          this.cdr.markForCheck();
+        }
+      });
+
+    // React to language changes without full reloads
+    this.languageService.languageChange$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((lang) => {
+        if (!lang || lang === this.currentLang) return;
+        this.currentLang = lang;
+        // Keep current content visible while new language loads
+        this.resetHomeData(true);
         this.loadTranslations();
-      }
-    });
-
-    this.loadTranslations();
-    this.getHome();
-
-    if (isPlatformBrowser(this.platformId)) {
-      this.sharedDataService.categories$.subscribe((res) => {
-        this.categoriesSection = res;
+        // try cached language first, then fetch if missing
+        this.getHome(false);
+        this.getHome(true);
+        this.getFaqs(true);
+        this.getBlogs(true);
+        this.cdr.markForCheck();
       });
 
-      this.sharedDataService.brands$.subscribe((res) => {
-        this.brandsSection = res;
-      });
-
-      this.sharedDataService.locations$.subscribe((res) => {
-        this.locationSection = res;
-      });
-    }
-
-    this.getFaqs();
-    this.getBlogs();
-
-    if (isPlatformServer(this.platformId)) {
-      this.seo.updateMetadataForType('home');
-    }
-    if (isPlatformBrowser(this.platformId)) {
+    if (this.isBrowserEnv) {
+      this.scheduleTask(() => this.ensureSwiperModulesRegistered(), 0);
+      this.scheduleTask(() => this.loadTranslations(), 0);
+      this.scheduleTask(() => this.getHome(), 0);
+      this.scheduleTask(() => this.initSharedDataStreams(), 1500);
+      this.scheduleTask(() => this.seo.updateMetadataForType('home'), 2500);
+    } else {
+      this.loadTranslations();
+      this.prepareHeroSlides();
+      this.getHome();
+      this.getFaqs(true);
+      this.getBlogs(true);
       this.seo.updateMetadataForType('home');
     }
   }
@@ -249,115 +286,334 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       if (videoElement) {
         videoElement.muted = true;
       }
+
+      requestAnimationFrame(() => {
+        this.motionReady = true;
+        this.cdr.markForCheck();
+      });
+
+      if (this.canUseHeroVideo) {
+        this.scheduleTask(() => {
+          this.heroVideoEnabled = true;
+          this.preloadHeroMedia(this.heroSlides[0]);
+          this.cdr.markForCheck();
+        }, this.heroVideoEnableDelay);
+      }
+
+      this.setupDeferredSectionObservers();
+      this.setupBelowFoldDataObservers();
+      this.monitorLargestContentfulPaint();
+      this.monitorLongTasks();
+    } else {
+      this.markDeferredSectionReady('categories');
+      this.markDeferredSectionReady('brands');
+      this.markDeferredSectionReady('specialOffers');
     }
   }
 
   ngOnDestroy() {
-    // Pause all videos on component destroy
+    this.destroy$.next();
+    this.destroy$.complete();
     this.pauseAllVideos();
+    if (
+      this.heroPreloadLink &&
+      this.document &&
+      this.document.head.contains(this.heroPreloadLink)
+    ) {
+      this.document.head.removeChild(this.heroPreloadLink);
+      this.heroPreloadLink = null;
+    }
+    this.disconnectDeferredSectionObservers();
+    this.disconnectBelowFoldObservers();
+    this.disconnectPerformanceObservers();
   }
 
   // ============================================
   // DATA FETCHING METHODS
   // ============================================
-  getHome() {
-    this.homeService.getHome().subscribe((res: HomeResponse) => {
-      this.headerSection = res.data.header_section;
-      this.onlyOnAfandinaSection = res.data.only_on_afandina_section;
-      this.specialOffersSection = res.data.special_offers_section;
-      this.whyChooseUsSection = res.data.why_choose_us_section;
-      this.documentSection = res.data.document_section;
-      this.instagramSection = res.data.short_videos_section;
-      this.where_find_us = res.data.where_find_us;
-      this.advertisements = res.data.advertisements;
+  private initSharedDataStreams() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
 
-      // Prepare hero slides from header section
-      this.prepareHeroSlides();
+    this.sharedDataService.categories$
+      .pipe(
+        filter((res): res is CategoriesSection => !!res),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res) => {
+        this.categoriesSection = res;
+        this.cdr.markForCheck();
+      });
 
-      // Initialize map (NEW)
-      if (isPlatformBrowser(this.platformId)) {
-        setTimeout(() => this.initializeMap(), 100);
-      }
-    });
+    this.sharedDataService.brands$
+      .pipe(
+        filter((res): res is BrandsSection => !!res),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res) => {
+        this.brandsSection = res;
+        this.cdr.markForCheck();
+      });
+
+    this.sharedDataService.locations$
+      .pipe(
+        filter((res): res is LocationSection => !!res),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((res) => {
+        this.locationSection = res;
+        this.cdr.markForCheck();
+      });
   }
 
-  getFaqs() {
-    this.homeService.getFaqs().subscribe((res: FaqsSection) => {
-      this.faqsSection = res;
-    });
+  private getHome(force = false) {
+    const lang = this.languageService.getCurrentLanguage();
+
+    // Serve from in-memory cache per language when available
+    if (!force && this.homeCache.has(lang)) {
+      const cachedLangData = this.homeCache.get(lang)!;
+      this.hydrateHomeResponse(cachedLangData);
+      return;
+    }
+
+    if (this.homeRequestInFlight && !force) {
+      return;
+    }
+
+    if (force) {
+      this.homeRequestInFlight = false; // allow refetch
+      this.transferState.remove(HOME_STATE_KEY);
+    }
+
+    const cached = force
+      ? null
+      : this.transferState.get<HomeResponse | null>(HOME_STATE_KEY, null);
+
+    if (cached) {
+      this.transferState.remove(HOME_STATE_KEY);
+      this.hydrateHomeResponse(cached);
+      return;
+    }
+
+    this.homeRequestInFlight = true;
+    this.homeService
+      .getHome()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: HomeResponse) => {
+          this.transferState.set(HOME_STATE_KEY, res);
+          this.homeCache.set(lang, res);
+          this.hydrateHomeResponse(res);
+          this.homeRequestInFlight = false;
+        },
+        error: () => {
+          this.homeRequestInFlight = false;
+        },
+      });
   }
 
-  getBlogs() {
-    this.homeService.getBlogs().subscribe((res: BlogData) => {
-      this.blogs = res;
-    });
+  private hydrateHomeResponse(res: HomeResponse) {
+    if (!res?.data) {
+      return;
+    }
+
+    const data = res.data;
+    this.headerSection = data.header_section;
+    this.onlyOnAfandinaSection = data.only_on_afandina_section;
+    this.specialOffersSection = data.special_offers_section;
+    this.specialOffersReady = !!this.specialOffersSection;
+    this.whyChooseUsSection = data.why_choose_us_section;
+    this.documentSection = data.document_section;
+    this.instagramSection = data.short_videos_section;
+    this.where_find_us = data.where_find_us;
+    this.advertisements = data.advertisements;
+
+    if (!this.isBrowserEnv && this.instagramSection?.short_videos?.length) {
+      this.instagramReady = true;
+    }
+
+    this.prepareHeroSlides();
+    this.cdr.markForCheck();
+  }
+
+  private resetHomeData(preserveVisibleContent: boolean = false) {
+    // When switching languages, we can keep existing content visible to avoid blank UI
+    if (!preserveVisibleContent) {
+      this.headerSection = null;
+      this.heroSlides = this.buildFallbackHeroSlides();
+      this.categoriesSection = null;
+      this.brandsSection = null;
+      this.specialOffersSection = undefined as any;
+      this.onlyOnAfandinaSection = undefined as any;
+      this.whyChooseUsSection = undefined as any;
+      this.documentSection = undefined as any;
+      this.instagramSection = null;
+      this.where_find_us = null;
+      this.specialOffersReady = false;
+      this.categoriesReady = false;
+      this.brandsReady = false;
+    } else {
+      // keep current data while new language fetch happens
+      this.specialOffersReady = !!this.specialOffersSection;
+      this.categoriesReady = !!this.categoriesSection;
+      this.brandsReady = !!this.brandsSection;
+    }
+  }
+
+  private getFaqs(force = false) {
+    if (this.faqsRequested && !force) {
+      return;
+    }
+
+    this.faqsRequested = true;
+    this.homeService
+      .getFaqs()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: FaqsSection) => {
+          this.faqsSection = res;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.faqsRequested = false;
+        },
+      });
+  }
+
+  private getBlogs(force = false) {
+    if (this.blogsRequested && !force) {
+      return;
+    }
+
+    this.blogsRequested = true;
+    this.homeService
+      .getBlogs()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res: BlogData) => {
+          this.blogs = res;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.blogsRequested = false;
+        },
+      });
   }
 
   // ============================================
   // HERO SECTION METHODS
   // ============================================
+  private buildFallbackHeroSlides(): HeroSlide[] {
+    return [
+      {
+        id: 'fallback-slide-1',
+        media_type: 'image',
+        image_path: '/assets/images/logo/car3.webp',
+        optimizedImagePath: '/assets/images/logo/opt/car3-720.webp',
+        title:
+          this.translations['luxury_sedans_suvs'] || 'Luxury Sedans & SUVs',
+        description:
+          this.translations['drive_premium_vehicles'] ||
+          'Drive premium vehicles at great rates',
+        badge: this.translations['best_sellers'] || 'Best Sellers',
+        show_cta: true,
+        show_stats: false,
+      },
+      {
+        id: 'fallback-slide-2',
+        media_type: 'image',
+        image_path: '/assets/images/logo/car1.webp',
+        optimizedImagePath: '/assets/images/logo/opt/car1-720.webp',
+        description:
+          this.translations['team_help_anytime'] ||
+          'Our team is here to help anytime',
+        badge: this.translations['reliable'] || 'Reliable',
+        show_cta: true,
+        show_stats: false,
+      },
+      {
+        id: 'fallback-slide-3',
+        media_type: 'image',
+        image_path: '/assets/images/logo/car2.webp',
+        optimizedImagePath: '/assets/images/logo/opt/car2-720.webp',
+        title: this.translations['explore_city'] || 'Explore the City',
+        description:
+          this.translations['discover_best_spots'] ||
+          'Discover the best spots with flexible rentals',
+        badge: this.translations['adventure'] || 'Adventure',
+        show_cta: true,
+        show_stats: false,
+      },
+    ];
+  }
+
   prepareHeroSlides() {
-    // Create slides from header section data
+    const slides = this.buildFallbackHeroSlides();
+
     if (this.headerSection) {
       const header: any = this.headerSection;
       const mediaType: 'video' | 'image' =
-        header && header.hero_media_type === 'video' ? 'video' : 'image';
-      this.heroSlides = [
-        {
-          id: 'slide-1',
-          media_type: mediaType,
-          video_path: header?.hero_header_video_path,
-          image_path: header?.hero_header_image_path,
-          title:
-            header?.hero_header_title ||
-            this.translations['premium_car_rental'] ||
-            'Premium Car Rental',
-          description:
-            header?.hero_header_description ||
-            this.translations['luxury_comfort'] ||
-            'Luxury and comfort with our exclusive fleet',
-          badge: this.translations['new'] || 'New',
-          show_cta: true,
-          show_stats: true,
-        },
-        {
-          id: 'slide-2',
-          media_type: 'image',
-          image_path: '/assets/images/logo/car3.webp',
-          title:
-            this.translations['luxury_sedans_suvs'] || 'Luxury Sedans & SUVs',
-          description:
-            this.translations['drive_premium_vehicles'] ||
-            'Drive premium vehicles at great rates',
-          badge: this.translations['best_sellers'] || 'Best Sellers',
-          show_cta: true,
-          show_stats: false,
-        },
-        {
-          id: 'slide-3',
-          media_type: 'image',
-          image_path: '/assets/images/logo/car1.webp',
-          description:
-            this.translations['team_help_anytime'] ||
-            'Our team is here to help anytime',
-          badge: this.translations['reliable'] || 'Reliable',
-          show_cta: true,
-          show_stats: false,
-        },
-        {
-          id: 'slide-4',
-          media_type: 'image',
-          image_path: '/assets/images/logo/car2.webp',
-          title: this.translations['explore_city'] || 'Explore the City',
-          description:
-            this.translations['discover_best_spots'] ||
-            'Discover the best spots with flexible rentals',
-          badge: this.translations['adventure'] || 'Adventure',
-          show_cta: true,
-          show_stats: false,
-        },
-      ];
+        header &&
+        header.hero_media_type === 'video' &&
+        this.canUseHeroVideo
+          ? 'video'
+          : 'image';
+
+      slides.unshift({
+        id: 'primary-slide',
+        media_type: mediaType,
+        video_path: header?.hero_header_video_path,
+        image_path: header?.hero_header_image_path,
+        optimizedImagePath: this.buildOptimizedPath(
+          header?.hero_header_image_path
+        ),
+        title:
+          header?.hero_header_title ||
+          this.translations['premium_car_rental'] ||
+          'Premium Car Rental',
+        description:
+          header?.hero_header_description ||
+          this.translations['luxury_comfort'] ||
+          'Luxury and comfort with our exclusive fleet',
+        badge: this.translations['new'] || 'New',
+        show_cta: true,
+        show_stats: true,
+      });
     }
+
+    this.heroSlides = slides;
+    this.preloadHeroMedia(this.heroSlides[0]);
+  }
+
+  private evaluateHeroVideoSupport() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    const nav = navigator as any;
+    const connection =
+      nav?.connection || nav?.mozConnection || nav?.webkitConnection;
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches;
+    const saveData = connection?.saveData;
+    const slowNetwork =
+      connection?.effectiveType &&
+      ['slow-2g', '2g'].includes(connection.effectiveType);
+    const lowBandwidth = connection?.downlink && connection.downlink < 1.5;
+
+    this.canUseHeroVideo = !prefersReducedMotion && !saveData && !slowNetwork && !lowBandwidth;
+  }
+
+  getHeroImageSrcSet(slide: HeroSlide): string | null {
+    if (!slide.image_path) {
+      return null;
+    }
+    if ((slide as any).optimizedImagePath) {
+      return `${(slide as any).optimizedImagePath}`;
+    }
+    return null;
   }
 
   // Hero Swiper Navigation Methods
@@ -379,115 +635,382 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private buildOptimizedPath(path?: string | null): string | undefined {
+    if (!path) {
+      return undefined;
+    }
+
+    if (path.includes('-optimized')) {
+      return path;
+    }
+
+    if (!path.includes('/assets/')) {
+      return undefined;
+    }
+
+    const extensionMatch = path.match(/\.[a-zA-Z0-9]+(?=($|\?))/);
+    if (!extensionMatch) {
+      return undefined;
+    }
+
+    const optimizedPath = path.replace(
+      extensionMatch[0],
+      `-optimized${extensionMatch[0]}`
+    );
+    return optimizedPath;
+  }
+
+  private preloadHeroMedia(slide?: HeroSlide) {
+    if (!slide || !isPlatformBrowser(this.platformId) || !this.document) {
+      return;
+    }
+
+    if (this.heroPreloadLink && this.document.head.contains(this.heroPreloadLink)) {
+      this.document.head.removeChild(this.heroPreloadLink);
+    }
+
+    const link = this.document.createElement('link');
+    link.rel = 'preload';
+    link.setAttribute('data-hero-preload', 'true');
+
+    const shouldPreloadVideo =
+      slide.media_type === 'video' &&
+      slide.video_path &&
+      this.heroVideoEnabled &&
+      this.canUseHeroVideo;
+
+    if (shouldPreloadVideo) {
+      link.as = 'video';
+      link.href = slide.video_path!;
+    } else if (slide.image_path) {
+      link.as = 'image';
+      link.href = (slide as any).optimizedImagePath || slide.image_path;
+      link.setAttribute('fetchpriority', 'high');
+      link.setAttribute('type', 'image/webp');
+    } else {
+      return;
+    }
+
+    this.document.head.appendChild(link);
+    this.heroPreloadLink = link;
+  }
+
+  private scheduleTask(task: () => void, timeout = 1200) {
+    if (!isPlatformBrowser(this.platformId)) {
+      task();
+      return;
+    }
+
+    const win = window as any;
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(() => task(), { timeout });
+    } else {
+      setTimeout(() => task(), timeout);
+    }
+  }
+
+  private setupDeferredSectionObservers() {
+    if (!this.isBrowserEnv || !this.document) {
+      this.markDeferredSectionReady('categories');
+      this.markDeferredSectionReady('brands');
+      this.markDeferredSectionReady('specialOffers');
+      return;
+    }
+
+    const targets: Array<{ key: DeferredSectionKey; selector: string }> = [
+      { key: 'categories', selector: '[data-defer-target="categories"]' },
+      { key: 'brands', selector: '[data-defer-target="brands"]' },
+      {
+        key: 'specialOffers',
+        selector: '[data-defer-target="specialOffers"]',
+      },
+    ];
+
+    targets.forEach(({ key, selector }) => {
+      if (this.isDeferredSectionReady(key)) {
+        return;
+      }
+
+      const element = this.document.querySelector(selector);
+      if (!element) {
+        this.markDeferredSectionReady(key);
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              this.markDeferredSectionReady(key);
+              observer.disconnect();
+            }
+          });
+        },
+        {
+          rootMargin: '250px 0px',
+          threshold: 0.01,
+        }
+      );
+
+      observer.observe(element);
+      this.intersectionObservers.push(observer);
+      this.scheduleTask(() => this.markDeferredSectionReady(key), 4500);
+    });
+  }
+
+  private disconnectDeferredSectionObservers() {
+    this.intersectionObservers.forEach((observer) => observer.disconnect());
+    this.intersectionObservers = [];
+  }
+  
+  private setupBelowFoldDataObservers() {
+    if (!this.isBrowserEnv || !this.document) {
+      this.getFaqs();
+      this.getBlogs();
+      this.enableInstagramSection();
+      return;
+    }
+
+    const targets: Array<{
+      key: 'faqs' | 'blogs' | 'instagram';
+      selector: string;
+      action: () => void;
+    }> = [
+      { key: 'faqs', selector: '[data-defer-target="faqs"]', action: () => this.getFaqs() },
+      { key: 'blogs', selector: '[data-defer-target="blogs"]', action: () => this.getBlogs() },
+      {
+        key: 'instagram',
+        selector: '[data-defer-target="instagram"]',
+        action: () => this.enableInstagramSection(),
+      },
+    ];
+
+    targets.forEach(({ key, selector, action }) => {
+      if (this.belowFoldLoads.get(key)) {
+        return;
+      }
+
+      const target = this.document.querySelector(selector);
+      if (!target) {
+        this.belowFoldLoads.set(key, true);
+        action();
+        return;
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              observer.disconnect();
+              this.belowFoldLoads.set(key, true);
+              action();
+            }
+          });
+        },
+        {
+          rootMargin: '250px 0px',
+          threshold: 0.01,
+        }
+      );
+
+      observer.observe(target);
+      this.belowFoldObservers.push(observer);
+
+      this.scheduleTask(() => {
+        if (this.belowFoldLoads.get(key)) {
+          return;
+        }
+        observer.disconnect();
+        this.belowFoldLoads.set(key, true);
+        action();
+      }, 6000);
+    });
+  }
+
+  private disconnectBelowFoldObservers() {
+    this.belowFoldObservers.forEach((observer) => observer.disconnect());
+    this.belowFoldObservers = [];
+  }
+
+  private enableInstagramSection() {
+    if (this.instagramReady) {
+      return;
+    }
+    this.instagramReady = true;
+    this.cdr.markForCheck();
+  }
+
+  private ensureSwiperModulesRegistered(): Promise<void> {
+    if (!this.isBrowserEnv || this.swiperModulesRegistered) {
+      return Promise.resolve();
+    }
+
+    if (!this.swiperModuleInitPromise) {
+      this.swiperModuleInitPromise = import('swiper')
+        .then(
+          ({
+            default: Swiper,
+            Autoplay,
+            EffectFade,
+            Pagination,
+            Navigation,
+            Parallax,
+          }) => {
+            Swiper.use([Autoplay, EffectFade, Pagination, Navigation, Parallax]);
+            this.swiperModulesRegistered = true;
+          }
+        )
+        .catch(() => {
+          this.swiperModulesRegistered = false;
+        });
+    }
+
+    return this.swiperModuleInitPromise;
+  }
+
+  private disconnectPerformanceObservers() {
+    this.performanceObservers.forEach((observer) => observer.disconnect());
+    this.performanceObservers = [];
+  }
+
+  private monitorLargestContentfulPaint() {
+    if (!this.isBrowserEnv || typeof PerformanceObserver === 'undefined') {
+      return;
+    }
+
+    try {
+      const observer = new PerformanceObserver((entryList) => {
+        const entries = entryList.getEntries();
+        const latest = entries[entries.length - 1] as PerformanceEntry & {
+          element?: Element;
+        };
+        if (latest) {
+          const element = latest.element as HTMLElement | undefined;
+          const targetDesc = element
+            ? `${element.tagName.toLowerCase()}${element.className ? '.' + element.className.split(' ').join('.') : ''}`
+            : 'unknown';
+          const heroFlag = element?.getAttribute('data-hero-lcp') === 'true' ? '(hero image)' : '';
+          console.info(
+            '[Perf] LCP candidate',
+            targetDesc,
+            `${latest.startTime.toFixed(0)}ms`,
+            heroFlag
+          );
+        }
+      });
+      observer.observe({ type: 'largest-contentful-paint', buffered: true } as PerformanceObserverInit);
+      this.performanceObservers.push(observer);
+    } catch (error) {
+      console.warn('[Perf] Unable to observe LCP', error);
+    }
+  }
+
+  private monitorLongTasks() {
+    if (!this.isBrowserEnv || typeof PerformanceObserver === 'undefined') {
+      return;
+    }
+
+    try {
+      const observer = new PerformanceObserver((entryList) => {
+        entryList.getEntries().forEach((entry) => {
+          console.info(
+            '[Perf] Long task',
+            `${entry.startTime.toFixed(0)}ms`,
+            `duration ${entry.duration.toFixed(0)}ms`
+          );
+        });
+      });
+      observer.observe({ entryTypes: ['longtask'] });
+      this.performanceObservers.push(observer);
+    } catch (error) {
+      console.warn('[Perf] Unable to observe long tasks', error);
+    }
+  }
+
+  private markDeferredSectionReady(section: DeferredSectionKey) {
+    let updated = false;
+
+    switch (section) {
+      case 'categories':
+        if (!this.categoriesReady) {
+          this.categoriesReady = true;
+          updated = true;
+        }
+        break;
+      case 'brands':
+        if (!this.brandsReady) {
+          this.brandsReady = true;
+          updated = true;
+        }
+        break;
+      case 'specialOffers':
+        if (!this.specialOffersReady) {
+          this.specialOffersReady = true;
+          updated = true;
+        }
+        break;
+    }
+
+    if (updated) {
+      this.cdr.markForCheck();
+    }
+  }
+
+  private isDeferredSectionReady(section: DeferredSectionKey): boolean {
+    switch (section) {
+      case 'categories':
+        return this.categoriesReady;
+      case 'brands':
+        return this.brandsReady;
+      case 'specialOffers':
+        return this.specialOffersReady;
+      default:
+        return true;
+    }
+  }
+
+  shouldRenderVideo(slide: HeroSlide, index: number): boolean {
+    return (
+      this.heroVideoEnabled &&
+      this.canUseHeroVideo &&
+      slide.media_type === 'video' &&
+      !!slide.video_path &&
+      this.isActiveHeroSlide(index)
+    );
+  }
+
+  isActiveHeroSlide(index: number): boolean {
+    return this.currentSlideIndex === index;
+  }
+
+  getHeroPrimaryImage(slide: HeroSlide): string {
+    return (
+      (slide as any).optimizedImagePath ||
+      slide.image_path ||
+      this.heroFallbackImage
+    );
+  }
+
   onSlideChange(event?: any) {
     if (this.heroSwiper?.swiperRef) {
       this.currentSlideIndex = this.heroSwiper.swiperRef.realIndex;
     }
   }
 
-  // ============================================
-  // MAP METHODS (NEW)
-  // ============================================
-
-  /**
-   * Initialize Google Maps with markers
-   */
-  initializeMap() {
-    if (this.where_find_us?.locations) {
-      // Build markers robustly: locations may come with lat/lng numbers, or
-      // a coords string, or under a nested position object. Handle common shapes.
-      this.mapMarkers = this.where_find_us.locations
-        .map((location: any) => {
-          // Try a few patterns to extract lat/lng
-          let lat: number | undefined;
-          let lng: number | undefined;
-
-          if (location.lat !== undefined && location.lng !== undefined) {
-            lat = Number(location.lat);
-            lng = Number(location.lng);
-          } else if (
-            location.latitude !== undefined &&
-            location.longitude !== undefined
-          ) {
-            lat = Number(location.latitude);
-            lng = Number(location.longitude);
-          } else if (location.position && location.position.lat !== undefined) {
-            lat = Number(location.position.lat);
-            lng = Number(location.position.lng);
-          } else if (location.coords && typeof location.coords === 'string') {
-            // coords may be "lat,lng" or a string with whitespace
-            const parts = location.coords
-              .split(/[\s,]+/)
-              .map((p: string) => p.trim())
-              .filter(Boolean);
-            if (parts.length >= 2) {
-              lat = Number(parts[0]);
-              lng = Number(parts[1]);
-            }
-          }
-
-          if (Number.isFinite(lat) && Number.isFinite(lng)) {
-            return {
-              position: { lat, lng },
-              label: {
-                text: location.name || '',
-                color: '#ffffff',
-                fontSize: '12px',
-                fontWeight: 'bold',
-              },
-              title: location.name,
-              icon: {
-                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTgiIGZpbGw9IiNGRkQzMDAiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSI0Ii8+CjxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjgiIGZpbGw9IiMwMDAwMDAiLz4KPC9zdmc+',
-                scaledSize: { width: 40, height: 40 },
-              },
-              data: location,
-            };
-          }
-
-          // Skip invalid locations (no coordinates)
-          return null;
-        })
-        .filter((m: any) => m !== null);
-
-      // Calculate center based on all markers
-      if (this.mapMarkers.length > 0) {
-        const avgLat =
-          this.mapMarkers.reduce((sum, m) => sum + m.position.lat, 0) /
-          this.mapMarkers.length;
-        const avgLng =
-          this.mapMarkers.reduce((sum, m) => sum + m.position.lng, 0) /
-          this.mapMarkers.length;
-        this.mapCenter = { lat: avgLat, lng: avgLng };
-      }
-    }
+  selectLocation(location: Location) {
+    this.selectedLocation = location;
+    this.cdr.markForCheck();
   }
 
-  /**
-   * Handle marker click event
-   * @param marker - The clicked marker
-   */
-  onMarkerClick(marker: any) {
-    this.selectedLocation = marker.data;
-  }
-
-  /**
-   * Close location details modal
-   */
   closeLocationDetails() {
     this.selectedLocation = null;
+    this.cdr.markForCheck();
   }
 
-  /**
-   * Navigate to location in Google Maps
-   * @param location - Location to navigate to
-   */
   navigateToLocation(location: Location) {
-    // Accept either a location object, or a marker-like object with position,
-    // or a coords string. Build a directions URL to open Google Maps with
-    // destination set to lat,lng when possible; otherwise fall back to a search by name.
+    const loc: any = location;
     let lat: number | undefined;
     let lng: number | undefined;
-    const loc: any = location;
 
     if (loc.lat !== undefined && loc.lng !== undefined) {
       lat = Number(loc.lat);
@@ -495,51 +1018,18 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     } else if (loc.latitude !== undefined && loc.longitude !== undefined) {
       lat = Number(loc.latitude);
       lng = Number(loc.longitude);
-    } else if (loc.position && loc.position.lat !== undefined) {
-      lat = Number(loc.position.lat);
-      lng = Number(loc.position.lng);
-    } else if (loc.coords && typeof loc.coords === 'string') {
-      const parts = loc.coords
-        .split(/[\s,]+/)
-        .map((p: string) => p.trim())
-        .filter(Boolean);
-      if (parts.length >= 2) {
-        lat = Number(parts[0]);
-        lng = Number(parts[1]);
-      }
     }
 
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      // Pan the inline google-map to the selected location and zoom in
-      this.mapCenter = { lat: lat!, lng: lng! };
-      this.mapZoom = Math.max(this.mapZoom, 14);
+    if (lat !== undefined && lng !== undefined) {
+      const url = `https://www.google.com/maps?q=${lat},${lng}`;
+      window.open(url, '_blank');
+      return;
+    }
 
-      // If we have a ViewChild reference to the GoogleMap, call panTo
-      try {
-        if (this.googleMap && typeof this.googleMap.panTo === 'function') {
-          this.googleMap.panTo({ lat: lat!, lng: lng! });
-        }
-      } catch (err) {
-        // ignore pan failures; mapCenter/zoom update will still reposition map
-        console.warn('googleMap.panTo failed', err);
-      }
-
-      // Find matching marker and open its details in the sidebar/modal
-      const found = this.mapMarkers.find(
-        (m) => m.position && m.position.lat === lat && m.position.lng === lng
-      );
-      if (found) {
-        this.onMarkerClick(found);
-      } else {
-        // Set selected location to provided data so modal shows details
-        this.selectedLocation = loc;
-      }
-    } else {
-      // fallback: search by name or address in a new tab
-      const q = encodeURIComponent(
-        loc.name || loc.address || 'Afandina Car Rental'
-      );
-      const url = `https://www.google.com/maps/search/?api=1&query=${q}`;
+    if (loc.address) {
+      const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        loc.address
+      )}`;
       window.open(url, '_blank');
     }
   }
@@ -563,6 +1053,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         .play()
         .then(() => {
           this.isPlaying[videoItem.id] = true;
+          this.cdr.markForCheck();
         })
         .catch((error) => {
           console.error('Error playing video:', error);
@@ -571,6 +1062,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       // Pause the video
       videoPlayer.pause();
       this.isPlaying[videoItem.id] = false;
+      this.cdr.markForCheck();
     }
   }
 
@@ -590,6 +1082,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       Object.keys(this.isPlaying).forEach((key) => {
         this.isPlaying[key] = false;
       });
+
+      this.cdr.markForCheck();
     }
   }
 
@@ -598,8 +1092,28 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   // ============================================
 
   private loadTranslations() {
-    this.translationService.getTranslations().subscribe((translations) => {
-      this.translations = translations;
+    this.translationService
+      .getTranslations()
+      .pipe(take(1))
+      .subscribe((translations) => {
+        this.translations = translations || {};
+
+      // Common UI translations
+      if (!this.translations['previous']) {
+        this.translations['previous'] =
+          this.currentLang === 'ar' ? 'السابق' : 'Previous';
+      }
+      if (!this.translations['next']) {
+        this.translations['next'] = this.currentLang === 'ar' ? 'التالي' : 'Next';
+      }
+      if (!this.translations['read_more']) {
+        this.translations['read_more'] =
+          this.currentLang === 'ar' ? 'اقرأ المزيد' : 'Read More';
+      }
+      if (!this.translations['view_all']) {
+        this.translations['view_all'] =
+          this.currentLang === 'ar' ? 'عرض الكل' : 'View All';
+      }
 
       // Hero Section Translations
       if (!this.translations['explore_cars']) {
@@ -782,6 +1296,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.translations['zoom_out'] =
           this.currentLang === 'ar' ? 'تصغير' : 'Zoom Out';
       }
+
+      this.prepareHeroSlides();
+      this.cdr.markForCheck();
     });
   }
 }
