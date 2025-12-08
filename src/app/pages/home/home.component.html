@@ -53,7 +53,7 @@
           </div>
         </div>
 
-        <ng-container *ngIf="heroSlides.length; else heroSkeleton">
+        <ng-container>
           <!-- Hero Swiper -->
           <swiper
             #heroSwiper
@@ -66,24 +66,31 @@
                 <!-- Media Container -->
                 <div class="hero-media-wrapper">
                   <div class="hero-image-container">
-                    <picture>
+                    <picture class="hero-picture">
                       <source
-                        *ngIf="slide.optimizedImagePath"
-                        [attr.srcset]="slide.optimizedImagePath"
+                        *ngIf="getHeroAvifSrcSet(slide)"
+                        type="image/avif"
+                        [attr.srcset]="getHeroAvifSrcSet(slide)"
+                        [attr.sizes]="heroImageSizes"
+                      />
+                      <source
+                        *ngIf="getHeroImageSrcSet(slide)"
                         type="image/webp"
+                        [attr.srcset]="getHeroImageSrcSet(slide)"
+                        [attr.sizes]="heroImageSizes"
                       />
                       <img
                         [src]="getHeroPrimaryImage(slide)"
                         [attr.srcset]="getHeroImageSrcSet(slide)"
-                        [attr.sizes]="
-                          getHeroImageSrcSet(slide) ? heroImageSizes : null
-                        "
+                        [attr.sizes]="heroImageSizes"
                         [alt]="slide.title || 'Afandina Car Rental'"
-                        class="hero-media parallax-image"
+                        class="hero-media"
                         [attr.loading]="i === 0 ? 'eager' : 'lazy'"
                         decoding="async"
-                        [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+                        [attr.fetchpriority]="i === 0 ? 'high' : 'low'"
                         [attr.data-hero-lcp]="i === 0 ? 'true' : null"
+                        width="1920"
+                        height="1080"
                       />
                     </picture>
                   </div>
@@ -185,7 +192,7 @@
           </swiper>
 
           <!-- Custom Navigation -->
-          <div class="hero-navigation">
+          <div class="hero-navigation" *ngIf="!isMobile">
             <button class="nav-button nav-prev" (click)="previousSlide()" aria-label="Previous slide">
               <i
                 [ngClass]="
@@ -210,6 +217,8 @@
             </button>
           </div>
 
+
+
           <!-- Floating Elements for Extra Visual Interest -->
           <div class="floating-shapes">
             <div class="shape shape-1"></div>
@@ -218,20 +227,7 @@
           </div>
         </ng-container>
 
-        <ng-template #heroSkeleton>
-          <div class="hero-skeleton">
-            <div class="hero-media-skeleton shimmer"></div>
-            <div class="hero-content-skeleton">
-              <div class="skeleton-line w-25"></div>
-              <div class="skeleton-line w-75"></div>
-              <div class="skeleton-line w-50"></div>
-              <div class="skeleton-cta-group">
-                <div class="skeleton-btn"></div>
-                <div class="skeleton-btn secondary"></div>
-              </div>
-            </div>
-          </div>
-        </ng-template>
+
       </section>
 
       <section class="cars_type py-4 pt-3 lazy-section" data-defer-target="categories">
@@ -299,7 +295,7 @@
                       class="category-image d-block m-auto position-absolute top-0 start-50 translate-middle"
                       width="150px"
                       height="88"
-                      style="object-fit: contain"
+                      style="object-fit: contain; aspect-ratio: 150 / 88;"
                       [alt]="'Car Category - ' + category.name"
                       [title]="category.name"
                       loading="lazy"
@@ -387,16 +383,13 @@
               [title]="'Browse ' + brand.name + ' Cars'"
             >
               <div
-                class="d-flex align-items-center justify-content-center"
-                style="height: 110px"
+                class="d-flex align-items-center justify-content-center brand-logo-box"
               >
                 <img
                   [src]="
                     'https://admin.afandinacarrental.com/storage/' + brand.image
                   "
-                  class="d-block m-auto"
-                  width="100px"
-                  height="75px"
+                  class="d-block m-auto brand-logo"
                   [alt]="'Car Brand - ' + brand.name"
                   [title]="'Car Brand - ' + brand.name"
                   loading="lazy"

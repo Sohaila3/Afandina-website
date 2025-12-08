@@ -106,16 +106,11 @@ export class LanguageComponent implements OnInit, OnDestroy {
   changeLanguage(newLang: string): void {
     if (!this.isBrowser || this.currentLang === newLang) return;
 
+    // Build target URL and perform a single hard reload; do not pre-apply language to avoid double render
     const newUrl = this.getLanguageUrl(newLang);
-    this.languageService.setCurrentLanguage(newLang);
-
-    // Apply direction immediately to prevent layout flicker
-    this.applyLanguageSettings(newLang);
-    this.currentLang = newLang;
-    this.updateCurrentLangName();
-
-    // Force a full reload so all SSR-managed assets and data pick the new language
-    window.location.href = newUrl;
+    // Persist choice silently for future sessions; no emit to avoid mid-flight updates
+    this.languageService.setCurrentLanguage(newLang, false);
+    window.location.replace(newUrl);
   }
 
   toggleLanguage(): void {

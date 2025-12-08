@@ -31,6 +31,7 @@ import {
 } from 'src/app/Models/home.model';
 import { HomeService } from 'src/app/services/home/home.service';
 import { SeoService } from 'src/app/services/seo/seo.service';
+import { ActivatedRoute } from '@angular/router';
 import { SharedDataService } from 'src/app/services/SharedDataService/shared-data-service.service';
 import type { SwiperOptions } from 'swiper/types';
 import { SwiperComponent } from 'swiper/angular';
@@ -65,6 +66,12 @@ interface Location {
   email?: string;
 }
 
+type HeroImageVariant = {
+  defaultSrc: string;
+  webpSrcSet: string;
+  avifSrcSet?: string;
+};
+
 type DeferredSectionKey = 'categories' | 'brands' | 'specialOffers';
 
 const HOME_STATE_KEY = makeStateKey<HomeResponse>('home-response');
@@ -83,7 +90,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   // ============================================
   heroSlides: HeroSlide[] = [];
   currentSlideIndex: number = 0;
-  heroImageSizes: string = '(max-width: 768px) 100vw, 100vw';
+  heroImageSizes: string = '(max-width: 640px) 100vw, (max-width: 1280px) 90vw, 1280px';
   readonly skeletonPlaceholders = Array.from({ length: 6 }, (_, index) => index);
   categoriesReady = false;
   brandsReady = false;
@@ -92,7 +99,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private belowFoldObservers: IntersectionObserver[] = [];
   private belowFoldLoads = new Map<string, boolean>();
   private readonly isBrowserEnv: boolean;
-  private readonly heroFallbackImage = '/assets/images/logo/car3-optimized.webp';
+  // Tiny transparent fallback to avoid flashing a car image before real slides load
+  private readonly heroFallbackImage =
+    'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
   private readonly heroVideoEnableDelay = 4500;
   private performanceObservers: PerformanceObserver[] = [];
   private swiperModulesRegistered = false;
@@ -110,7 +119,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     fadeEffect: {
       crossFade: true,
     },
-    parallax: true,
+    parallax: false,
     autoplay: {
       delay: 5000,
       disableOnInteraction: false,
@@ -154,6 +163,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   motionReady = false;
   private canUseHeroVideo = true;
   heroVideoEnabled = false;
+  isMobile = false;
 
   // Existing Swiper Configurations
   swiperConfig: any = {
@@ -213,6 +223,7 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private translationService: TranslationService,
     private seo: SeoService,
+    private route: ActivatedRoute,
     private cdr: ChangeDetectorRef,
     @Inject(DOCUMENT) private document: Document,
     private transferState: TransferState
@@ -234,6 +245,12 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentLang = this.languageService.getCurrentLanguage();
 
     if (isPlatformBrowser(this.platformId)) {
+      this.isMobile = window.innerWidth <= 768;
+      if (this.isMobile) {
+        this.heroSwiperConfig.autoplay = false;
+        this.heroSwiperConfig.loop = false;
+        this.heroSwiperConfig.effect = 'slide';
+      }
       this.evaluateHeroVideoSupport();
     }
 
@@ -264,11 +281,16 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
+    this.applyRouteSeo();
+
     if (this.isBrowserEnv) {
-      this.scheduleTask(() => this.ensureSwiperModulesRegistered(), 0);
+      // Defer Swiper lib registration to idle to cut main-thread blocking (TBT)
+      this.scheduleTask(() => this.ensureSwiperModulesRegistered(), 1200);
       this.scheduleTask(() => this.loadTranslations(), 0);
       this.scheduleTask(() => this.getHome(), 0);
       this.scheduleTask(() => this.initSharedDataStreams(), 1500);
+      this.scheduleTask(() => this.getFaqs(true), 2000);
+      this.scheduleTask(() => this.getBlogs(true), 3000);
       this.scheduleTask(() => this.seo.updateMetadataForType('home'), 2500);
     } else {
       this.loadTranslations();
@@ -278,6 +300,28 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       this.getBlogs(true);
       this.seo.updateMetadataForType('home');
     }
+  }
+
+  private applyRouteSeo(): void {
+    const seoData = this.route.snapshot.data['seo'] || {};
+    const langParam =
+      ((this.route.parent || this.route).snapshot.paramMap.get('lang') as 'en' | 'ar') ||
+      this.currentLang ||
+      'en';
+
+    this.seo.applyStaticMeta({
+      title: seoData.title || 'Afandina | Home',
+      description:
+        seoData.description || 'Luxury and comfort with Afandina exclusive fleet.',
+      keywords:
+        seoData.keywords || 'car rental, luxury cars, dubai, Afandina',
+      image:
+        seoData.image || 'https://afandinacarrental.com/assets/images/logo/car3-optimized.webp',
+      imageAlt: seoData.imageAlt || 'Afandina Car Rental',
+      canonical: seoData.canonical,
+      lang: langParam,
+      robots: seoData.robots || { index: 'index', follow: 'follow' },
+    });
   }
 
   ngAfterViewInit() {
@@ -300,14 +344,16 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         }, this.heroVideoEnableDelay);
       }
 
-      this.setupDeferredSectionObservers();
-      this.setupBelowFoldDataObservers();
-      this.monitorLargestContentfulPaint();
-      this.monitorLongTasks();
-    } else {
-      this.markDeferredSectionReady('categories');
-      this.markDeferredSectionReady('brands');
-      this.markDeferredSectionReady('specialOffers');
+      if (!this.isBrowserEnv || this.isMobile) {
+        this.markDeferredSectionReady('categories');
+        this.markDeferredSectionReady('brands');
+        this.markDeferredSectionReady('specialOffers');
+      } else {
+        this.setupDeferredSectionObservers();
+        this.setupBelowFoldDataObservers();
+        this.monitorLargestContentfulPaint();
+        this.monitorLongTasks();
+      }
     }
   }
 
@@ -343,6 +389,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe((res) => {
         this.categoriesSection = res;
+        if (this.isMobile && this.categoriesSection?.categories) {
+          this.categoriesSection.categories = this.categoriesSection.categories.slice(0, 6);
+        }
         this.cdr.markForCheck();
       });
 
@@ -353,6 +402,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe((res) => {
         this.brandsSection = res;
+        if (this.isMobile && this.brandsSection?.brands) {
+          this.brandsSection.brands = this.brandsSection.brands.slice(0, 8);
+        }
         this.cdr.markForCheck();
       });
 
@@ -421,7 +473,25 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     const data = res.data;
     this.headerSection = data.header_section;
     this.onlyOnAfandinaSection = data.only_on_afandina_section;
+    if (this.onlyOnAfandinaSection?.only_on_afandina) {
+      // Remove duplicates based on id
+      this.onlyOnAfandinaSection.only_on_afandina = this.onlyOnAfandinaSection.only_on_afandina.filter((item: any, index: number, self: any[]) =>
+        index === self.findIndex((t: any) => t.id === item.id)
+      );
+      if (this.isMobile) {
+        this.onlyOnAfandinaSection.only_on_afandina = this.onlyOnAfandinaSection.only_on_afandina.slice(0, 4);
+      }
+    }
     this.specialOffersSection = data.special_offers_section;
+    if (this.specialOffersSection?.special_offers) {
+      // Remove duplicates based on id
+      this.specialOffersSection.special_offers = this.specialOffersSection.special_offers.filter((item, index, self) =>
+        index === self.findIndex((t) => t.id === item.id)
+      );
+      if (this.isMobile) {
+        this.specialOffersSection.special_offers = this.specialOffersSection.special_offers.slice(0, 4);
+      }
+    }
     this.specialOffersReady = !!this.specialOffersSection;
     this.whyChooseUsSection = data.why_choose_us_section;
     this.documentSection = data.document_section;
@@ -583,6 +653,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.heroSlides = slides;
+    if (this.isMobile) {
+      this.heroSlides = this.heroSlides.slice(0, 1);
+    }
     this.preloadHeroMedia(this.heroSlides[0]);
   }
 
@@ -603,17 +676,52 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       ['slow-2g', '2g'].includes(connection.effectiveType);
     const lowBandwidth = connection?.downlink && connection.downlink < 1.5;
 
-    this.canUseHeroVideo = !prefersReducedMotion && !saveData && !slowNetwork && !lowBandwidth;
+    this.canUseHeroVideo = !prefersReducedMotion && !saveData && !slowNetwork && !lowBandwidth && !this.isMobile;
   }
 
   getHeroImageSrcSet(slide: HeroSlide): string | null {
+    const variant = this.getHeroVariant(slide);
+    if (variant?.webpSrcSet) {
+      return variant.webpSrcSet;
+    }
+
     if (!slide.image_path) {
       return null;
     }
-    if ((slide as any).optimizedImagePath) {
-      return `${(slide as any).optimizedImagePath}`;
+
+    const optimized = (slide as any).optimizedImagePath;
+    if (optimized) {
+      return `${optimized} 720w, ${slide.image_path} 1920w`;
     }
-    return null;
+    return slide.image_path;
+  }
+
+  getHeroAvifSrcSet(slide: HeroSlide): string | null {
+    const variant = this.getHeroVariant(slide);
+    return variant?.avifSrcSet || null;
+  }
+
+  private getHeroVariant(slide: HeroSlide): HeroImageVariant | null {
+    const imagePath = slide.image_path;
+    if (!imagePath) {
+      return null;
+    }
+
+    const match = imagePath.match(/\/assets\/images\/logo\/([^./]+)(?:\.[a-zA-Z0-9]+)?$/);
+    if (!match) {
+      return null;
+    }
+
+    const baseName = match[1].replace('-optimized', '');
+    const optDir = '/assets/images/logo/opt/';
+    const buildSet = (ext: string) =>
+      `${optDir}${baseName}-320.${ext} 320w, ${optDir}${baseName}-720.${ext} 720w, ${optDir}${baseName}-1280.${ext} 1280w, ${imagePath} 1920w`;
+
+    return {
+      defaultSrc: `${optDir}${baseName}-1280.webp`,
+      webpSrcSet: buildSet('webp'),
+      avifSrcSet: buildSet('avif'),
+    };
   }
 
   // Hero Swiper Navigation Methods
@@ -683,8 +791,10 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
       link.as = 'video';
       link.href = slide.video_path!;
     } else if (slide.image_path) {
+      const variant = this.getHeroVariant(slide);
       link.as = 'image';
-      link.href = (slide as any).optimizedImagePath || slide.image_path;
+      link.href =
+        variant?.defaultSrc || (slide as any).optimizedImagePath || slide.image_path;
       link.setAttribute('fetchpriority', 'high');
       link.setAttribute('type', 'image/webp');
     } else {
@@ -984,7 +1094,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getHeroPrimaryImage(slide: HeroSlide): string {
+    const variant = this.getHeroVariant(slide);
     return (
+      variant?.defaultSrc ||
       (slide as any).optimizedImagePath ||
       slide.image_path ||
       this.heroFallbackImage

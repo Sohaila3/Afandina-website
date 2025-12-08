@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './pages/home/home.component';
+import { RouterModule, Routes, PreloadAllModules } from '@angular/router';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { BlogDetailsComponent } from './pages/blog/blog-details/blog-details.component';
 import { productRoutesCanMatch } from './pages/product/product-routes.can-match';
@@ -17,6 +16,7 @@ const routes: Routes = [
     redirectTo: ':lang/category/:slug',
     pathMatch: 'full',
   },
+
   // Base URL redirects to English home page
   { path: '', redirectTo: '/en', pathMatch: 'full' },
 
@@ -34,7 +34,19 @@ const routes: Routes = [
   {
     path: ':lang',
     children: [
-      { path: '', component: HomeComponent },
+      {
+        path: '',
+        loadChildren: () =>
+          import('./pages/home/home.module').then((m) => m.HomeModule),
+        data: {
+          seo: {
+            title: 'Afandina | Home (EN/AR)',
+            description: 'Luxury and comfort with Afandina exclusive fleet.',
+            keywords: 'car rental, luxury cars, dubai, afandina',
+            image: 'https://afandinacarrental.com/assets/images/logo/car3-optimized.webp',
+          },
+        },
+      },
       // This will redirect /en/home to /en
       { path: 'home', redirectTo: '', pathMatch: 'full' },
       {
@@ -77,6 +89,7 @@ const routes: Routes = [
     RouterModule.forRoot(routes, {
       scrollPositionRestoration: 'top',
       initialNavigation: 'enabledBlocking',
+      preloadingStrategy: PreloadAllModules,
     }),
   ],
   exports: [RouterModule],

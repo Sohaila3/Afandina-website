@@ -15,6 +15,8 @@ import { SharedDataService } from 'src/app/services/SharedDataService/shared-dat
 export class FooterComponent {
   translations: Record<string, string> = {};
 
+  readonly defaultLogo = '/assets/images/logo/logo.svg';
+
   brandsSection: BrandsSection | null = null;
   categoriesSection: CategoriesSection | null = null;
   locationsSection: LocationSection | null = null;

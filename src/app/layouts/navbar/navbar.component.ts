@@ -40,6 +40,8 @@ export class NavbarComponent implements OnDestroy {
   @Input() dark_logo!: string;
   @Input() black_logo!: string;
 
+  readonly defaultLogo = '/assets/images/logo/logo.svg';
+
   currentLang: string = 'en'; // Default to 'en'
   @ViewChild('navbarCollapse') navbarCollapse!: ElementRef;
   isBrandDropdownVisible = false;

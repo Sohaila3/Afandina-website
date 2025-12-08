@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { END_POINTS } from 'src/app/core/globals/global-config';
 import { BlogData, BrandsSection, CategoriesSection, FaqsSection, HomeResponse, LocationSection } from 'src/app/Models/home.model';
 
@@ -28,7 +29,7 @@ export class HomeService {
  
   
   getHome(){
-    return this.http.get<HomeResponse>(API_URL_home);
+    return this.http.get<HomeResponse>(API_URL_home).pipe(shareReplay(1));
   }
 
   getAllLocation(){
@@ -36,7 +37,7 @@ export class HomeService {
   }
 
   getSettings(){
-    return this.http.get<any>(API_URL_settings);
+    return this.http.get<any>(API_URL_settings).pipe(shareReplay(1));
   }
 
   // getBrands(){
@@ -48,7 +49,7 @@ export class HomeService {
   // }
 
   getFaqs(){
-    return this.http.get<FaqsSection>(API_URL_faqs);
+    return this.http.get<FaqsSection>(API_URL_faqs).pipe(shareReplay(1));
   }
 
   // getCategories(){
@@ -56,7 +57,7 @@ export class HomeService {
   // }
 
   getBlogs(){
-    return this.http.get<BlogData>(API_URL_blogs);
+    return this.http.get<BlogData>(API_URL_blogs).pipe(shareReplay(1));
   }
 
   getSearch(data: { query: string }): Observable<any> {
@@ -76,12 +77,11 @@ export class HomeService {
   }
 
   getCrruncies() {
-    return this.http.get<any>(currencies);
+    return this.http.get<any>(currencies).pipe(shareReplay(1));
   }
 
   getlocationDetails(slug: string): Observable<any> {
-    return this.http.get<any>(showlocation + `/${slug}`);
-
+    return this.http.get<any>(showlocation + `/${slug}`).pipe(shareReplay(1));
   }
   
 }

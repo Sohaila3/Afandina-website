@@ -4,7 +4,6 @@ import {
   PLATFORM_ID,
   Optional,
   HostListener,
-  AfterViewInit,
   OnDestroy,
   OnInit,
 } from '@angular/core';
@@ -27,7 +26,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil, finalize } from 'rxjs/operators';
-import { DeferredScriptService } from './core/performance/deferred-script.service';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
@@ -37,8 +35,10 @@ import { HttpClient } from '@angular/common/http';
 
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'Afandina';
+
+  private readonly defaultLogo = '/assets/images/logo/logo.svg';
 
   brandsSection!: BrandsSection;
 
@@ -52,11 +52,11 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
   currentLang: string = 'en';
 
-  dark_logo!: string;
+  dark_logo: string = this.defaultLogo;
 
-  light_logo!: string;
+  light_logo: string = this.defaultLogo;
 
-  black_logo!: string;
+  black_logo: string = this.defaultLogo;
 
   isScrolled = false;
 
@@ -91,7 +91,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     private route: ActivatedRoute,
 
     private router: Router,
-    private deferredScriptService: DeferredScriptService,
     private http: HttpClient
   ) {}
 
@@ -118,13 +117,10 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         this.getSettings(true);
       });
 
+    // Load settings immediately on the client to avoid double render caused by delayed fetch
     if (isPlatformBrowser(this.platformId)) {
-      this.scheduleIdleTask(() => this.getSettings(), 300);
+      this.getSettings();
     }
-  }
-
-  ngAfterViewInit(): void {
-    this.scheduleIdleTask(() => this.deferredScriptService.init(), 0);
   }
 
   private loadTranslationsForLang(lang: string, showLoader: boolean = false) {
@@ -173,8 +169,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
 
         el.setAttribute('dir', 'rtl');
 
-        el.style.direction = 'rtl';
-
         bo.classList.add('arabic');
 
         el.classList.add('arabic');
@@ -184,8 +178,6 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
         el.setAttribute('direction', 'ltr');
 
         el.setAttribute('dir', 'ltr');
-
-        el.style.direction = 'ltr';
 
         bo.classList.remove('arabic');
 
@@ -227,14 +219,16 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!res?.data?.main_setting) return;
 
     this.settings = res;
-    this.dark_logo = res.data.main_setting.dark_logo;
-    this.light_logo = res.data.main_setting.light_logo;
-    this.black_logo = res.data.main_setting.black_logo;
+    this.dark_logo = res.data.main_setting.dark_logo || this.defaultLogo;
+    this.light_logo = res.data.main_setting.light_logo || this.defaultLogo;
+    this.black_logo = res.data.main_setting.black_logo || this.defaultLogo;
     this.favicon = res.data.main_setting.favicon;
     this.phoneNumber = res.data.main_setting.contact_data.phone;
 
     this.languages = res.data.main_setting.languages;
     this.contactData = res.data.main_setting.contact_data;
+
+    this.currencies = res.data.main_setting.currencies || [];
 
     this.languageService.setLanguages(this.languages);
     this.sharedDataService.contactData(this.contactData);
@@ -246,17 +240,29 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
       this.updateIconHref();
     }
 
+    const storedCurrencyId = isPlatformBrowser(this.platformId)
+      ? localStorage.getItem('currentCurrency')
+      : null;
+
+    const storedCurrency = storedCurrencyId
+      ? this.currencies.find(
+          (currency: any) => currency.id.toString() === storedCurrencyId
+        )
+      : null;
+
     const defaultCurrency = this.currencies.find(
       (currency: any) => currency.is_default === 1
     );
 
-    if (defaultCurrency && isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('currentCurrency', defaultCurrency.id.toString());
-      localStorage.setItem('currencyCode', defaultCurrency.code);
-      localStorage.setItem('currency_name', defaultCurrency.name);
+    const currencyToUse = storedCurrency || defaultCurrency;
 
-      this.languageService.setCurrentCurrency(defaultCurrency.id.toString());
-      this.languageService.setCurrentCurrencyCode(defaultCurrency.code);
+    if (currencyToUse && isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('currentCurrency', currencyToUse.id.toString());
+      localStorage.setItem('currencyCode', currencyToUse.code);
+      localStorage.setItem('currency_name', currencyToUse.name);
+
+      this.languageService.setCurrentCurrency(currencyToUse.id.toString());
+      this.languageService.setCurrentCurrencyCode(currencyToUse.code);
     }
   }
 

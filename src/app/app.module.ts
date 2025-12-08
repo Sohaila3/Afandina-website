@@ -1,11 +1,9 @@
-import { NgModule } from '@angular/core';
+import { NgModule, isDevMode, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LayoutsModule } from './layouts/layouts.module';
-import { HomeComponent } from './pages/home/home.component';
-import { MaterialModule } from './shared-modules/material/material.module';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
   HttpClientModule,
@@ -30,7 +28,6 @@ import { ProductUiModule } from './pages/product/product-ui.module';
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent,
     NotFoundComponent,
     AllCarsComponent,
   ],
@@ -39,7 +36,6 @@ import { ProductUiModule } from './pages/product/product-ui.module';
     CommonModule,
     AppRoutingModule,
     LayoutsModule,
-    MaterialModule,
     BrowserAnimationsModule,
     HttpClientModule,
     RouterModule,
@@ -74,6 +70,7 @@ import { ProductUiModule } from './pages/product/product-ui.module';
     LanguageService,
     TranslationService,
   ],
+  schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

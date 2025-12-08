@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, ActivatedRoute } from '@angular/router';
 import { LanguageService } from 'src/app/core/services/language.service';
 import { AboutUsResponse } from 'src/app/Models/about.model';
 import { AboutUsService } from 'src/app/services/about-us/about-us.service';
@@ -21,6 +21,7 @@ export class AboutUsComponent {
     private aboutUsService: AboutUsService,
     private languageService: LanguageService,
     private router: Router,
+    private route: ActivatedRoute,
     private seo:SeoService,
     @Inject(PLATFORM_ID) private platformId: Object,
   ){}
@@ -39,12 +40,32 @@ export class AboutUsComponent {
       (error) => {
       }
     );
+    this.applyRouteSeo();
     if (isPlatformServer(this.platformId)) {
       this.seo.updateMetadataForType('about_us');
     }
     if (isPlatformBrowser(this.platformId)) {
       this.seo.updateMetadataForType('about_us');
     }
+  }
+
+  private applyRouteSeo(): void {
+    const seoData = this.route.snapshot.data['seo'] || {};
+    const langParam =
+      ((this.route.parent || this.route).snapshot.paramMap.get('lang') as 'en' | 'ar') ||
+      this.currentLang ||
+      'en';
+
+    this.seo.applyStaticMeta({
+      title: seoData.title || 'Afandina | About',
+      description: seoData.description || 'About Afandina car rental services.',
+      keywords: seoData.keywords || 'about afandina, car rental, dubai',
+      image: seoData.image || 'https://afandinacarrental.com/assets/images/logo/car3-optimized.webp',
+      imageAlt: seoData.imageAlt || 'Afandina Car Rental',
+      canonical: seoData.canonical,
+      lang: langParam,
+      robots: seoData.robots || { index: 'index', follow: 'follow' },
+    });
   }
 
 }

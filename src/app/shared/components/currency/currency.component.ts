@@ -46,12 +46,30 @@ export class CurrencyComponent {
   }
 
   getCurrencies() {
-    const defaultCurrency = this.currencies.find((currency: any) => currency.is_default === 1);
-    if (defaultCurrency) {
-      this.languageService.setCurrentCurrency(defaultCurrency.id.toString());
-      this.languageService.setCurrentCurrencyCode(defaultCurrency.code);
+    const storedCurrencyId = this.isBrowser
+      ? localStorage.getItem('currentCurrency')
+      : null;
+
+    const storedCurrency = storedCurrencyId
+      ? this.currencies.find(
+          (currency: any) => currency.id.toString() === storedCurrencyId
+        )
+      : null;
+
+    const defaultCurrency = this.currencies.find(
+      (currency: any) => currency.is_default === 1
+    );
+
+    const currencyToUse = storedCurrency || defaultCurrency;
+
+    if (currencyToUse) {
+      this.languageService.setCurrentCurrency(currencyToUse.id.toString());
+      this.languageService.setCurrentCurrencyCode(currencyToUse.code);
+
       if (this.isBrowser) {
-        localStorage.setItem('currentCurrencyName', defaultCurrency.name);
+        localStorage.setItem('currentCurrency', currencyToUse.id.toString());
+        localStorage.setItem('currencyCode', currencyToUse.code);
+        localStorage.setItem('currency_name', currencyToUse.name);
       }
     }
     this.languageService.setCurrencies(this.currencies);

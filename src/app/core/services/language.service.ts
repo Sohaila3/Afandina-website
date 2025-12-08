@@ -93,7 +93,7 @@ export class LanguageService {
     return this.currentLanguage;
   }
 
-  setCurrentLanguage(language: string): void {
+  setCurrentLanguage(language: string, emit: boolean = true): void {
     // Only allow switching to supported languages
     const lang = (language || '').toLowerCase();
     const target = this.allowedLanguages.includes(lang) ? lang : 'en';
@@ -107,7 +107,9 @@ export class LanguageService {
     }
 
     // notify listeners (e.g. components that need to react without reloading)
-    this.languageChange.next(target);
+    if (emit) {
+      this.languageChange.next(target);
+    }
   }
 
   getCurrentCurrency(): string {
@@ -120,10 +122,14 @@ export class LanguageService {
   }
 
   setCurrentCurrencyCode(code: string): void {
+    // Keep the primitive property in sync with the observable/stateful source
+    this.currencyCode = code;
+
     if (code !== this.currencyCodeSource.getValue()) {
       this.currencyCodeSource.next(code);
-      this.storageService.setItem('currencyCode', code);
     }
+
+    this.storageService.setItem('currencyCode', code);
   }
 
   getCurrentCurrencyCode(): string {

@@ -32,19 +32,19 @@
       >
         <img
           *ngIf="!isHomePage()"
-          src="{{ black_logo }}"
+          [src]="black_logo || defaultLogo"
           width="70px"
           height="70px"
-          [alt]="translations['home']"
-          [title]="translations['home']"
+          [alt]="translations['home'] || 'Afandina Logo'"
+          [title]="translations['home'] || 'Afandina'"
         />
         <img
           *ngIf="isHomePage()"
-          src="{{ dark_logo }}"
+          [src]="dark_logo || defaultLogo"
           width="70px"
           height="70px"
-          [alt]="translations['home']"
-          [title]="translations['home']"
+          [alt]="translations['home'] || 'Afandina Logo'"
+          [title]="translations['home'] || 'Afandina'"
         />
       </a>
       <div style="order: 1">

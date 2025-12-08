@@ -9,14 +9,15 @@
   font-display: swap;
 }
 
-// Arabic font for better rendering across the site
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap');
-
 html[lang='ar'],
 body.arabic,
 body.arabic *:not(i) {
   font-family: 'Cairo', 'Helvetica Neue', Arial, sans-serif !important;
   letter-spacing: 0;
+}
+
+html[lang='ar'] {
+  direction: rtl;
 }
 
 body {

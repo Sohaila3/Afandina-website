@@ -26,7 +26,9 @@
             "assets": [
               "src/favicon.ico",
               "src/assets",
-              "src/.htaccess"
+              "src/.htaccess",
+              "src/robots.txt",
+              "src/manifest.webmanifest"
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
@@ -37,7 +39,10 @@
               "node_modules/swiper/swiper-bundle.min.css",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "serviceWorker": true
           },
           "configurations": {
             "production": {
@@ -101,7 +106,10 @@
               "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": false,
-              "namedChunks": true
+              "namedChunks": true,
+              "scripts": [
+                "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -130,9 +138,15 @@
             "polyfills": ["zone.js", "zone.js/testing"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
-            "assets": ["src/favicon.ico", "src/assets"],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/manifest.webmanifest"
+            ],
             "styles": ["src/styles.scss"],
-            "scripts": []
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ]
           }
         },
         "server": {

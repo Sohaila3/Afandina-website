@@ -13,6 +13,19 @@ import { isPlatformServer } from '@angular/common';
 import { PlatformLocation } from '@angular/common';
 import { LanguageService } from 'src/app/core/services/language.service';
 
+const PROD_HOST = 'https://afandinacarrental.com';
+
+export interface StaticSeoData {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  image?: string;
+  imageAlt?: string;
+  canonical?: string;
+  lang?: 'en' | 'ar';
+  robots?: { index: string; follow: string };
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -35,6 +48,42 @@ export class SeoService {
     this.currentLang = this.languageService.getCurrentLanguage();
     this.renderer = this.rendererFactory.createRenderer(null, null);
     this.setCurrentUrl();
+  }
+
+  /**
+   * Lightweight, route-driven SEO update that works in SSR/prerender.
+   * Uses updateTag to avoid duplicates and ensures tags appear in view-source.
+   */
+  applyStaticMeta(meta: StaticSeoData): void {
+    const title = meta.title || 'Afandina Car Rental';
+    const description = meta.description || 'Premium car rental experience.';
+    const keywords = meta.keywords || 'car rental, dubai, luxury cars';
+    const image =
+      meta.image || 'https://afandinacarrental.com/assets/images/logo/car3-optimized.webp';
+    const imageAlt = meta.imageAlt || title;
+    const lang = (meta.lang || this.currentLang || 'en') as 'en' | 'ar';
+    const canonical = meta.canonical || this.buildCanonical(lang);
+    const robots = meta.robots || { index: 'index', follow: 'follow' };
+
+    this.titleService.setTitle(title);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'keywords', content: keywords });
+    this.meta.updateTag({ property: 'og:title', content: title });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:image', content: image });
+    this.meta.updateTag({ property: 'og:image:alt', content: imageAlt });
+    this.meta.updateTag({ property: 'og:url', content: canonical });
+    this.meta.updateTag({ property: 'og:type', content: 'website' });
+    this.meta.updateTag({ property: 'og:locale', content: lang === 'ar' ? 'ar' : 'en' });
+
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: title });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    this.meta.updateTag({ name: 'twitter:image', content: image });
+    this.meta.updateTag({ name: 'twitter:url', content: canonical });
+
+    this.addCanonicalTag(canonical);
+    this.addMetaRobotsTag(robots);
   }
 
   private setCurrentUrl(): void {
@@ -181,18 +230,33 @@ export class SeoService {
   }
 
   addCanonicalTag(url: string): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const existingLink = this.document.querySelector('link[rel="canonical"]');
-      if (existingLink) {
-        this.renderer.setAttribute(existingLink, 'href', url);
+    // Normalize and ensure only one canonical tag exists
+    const normalizedUrl = url.replace(/\/+$|(?<!:)\/\//g, '/').replace(':/', '://');
+    const existingLinks = Array.from(
+      this.document.querySelectorAll('link[rel="canonical"]')
+    );
+    existingLinks.forEach((link, idx) => {
+      if (idx === 0) {
+        link.setAttribute('href', normalizedUrl);
       } else {
+        link.remove();
+      }
+    });
+
+    if (isPlatformBrowser(this.platformId)) {
+      if (existingLinks.length === 0) {
         const link: HTMLLinkElement = this.renderer.createElement('link');
         this.renderer.setAttribute(link, 'rel', 'canonical');
-        this.renderer.setAttribute(link, 'href', url);
+        this.renderer.setAttribute(link, 'href', normalizedUrl);
         this.renderer.appendChild(this.document.head, link);
       }
     } else if (isPlatformServer(this.platformId)) {
-      const canonicalTag = `<link rel="canonical" href="${url}">`;
+      const canonicalTag = `<link rel="canonical" href="${normalizedUrl}">`;
+      // remove existing server-side canonical if injected earlier
+      const serverLinks = Array.from(
+        this.document.querySelectorAll('link[rel="canonical"]')
+      );
+      serverLinks.forEach((lnk) => lnk.remove());
       this.document.head.insertAdjacentHTML('beforeend', canonicalTag);
     }
   }
@@ -320,6 +384,14 @@ export class SeoService {
       return location.pathname;
     }
     return '';
+  }
+
+  private buildCanonical(lang?: 'en' | 'ar'): string {
+    const baseUrl = PROD_HOST || this.getBaseUrl();
+    const path = this.getCurrentPathWithoutLanguage();
+    const resolvedLang = lang || this.currentLang || 'en';
+    const normalizedPath = path === '/' ? '' : path;
+    return `${baseUrl}/${resolvedLang}${normalizedPath}`.replace(/\/+$/, '');
   }
 
   /**

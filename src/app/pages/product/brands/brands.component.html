@@ -23,9 +23,9 @@
             <ng-template swiperSlide *ngFor="let brand of brandsSection.brands">
                 <div class="card_cartype text-center card p-2" [routerLink]="['/', currentLang ,'brand' , brand.slug ]" 
                 >
-                    <div class="d-flex align-items-center justify-content-center" style="height: 110px;">
+                    <div class="d-flex align-items-center justify-content-center brand-logo-box">
                         <img [src]="'https://admin.afandinacarrental.com/storage/'+brand.image"
-                            class="d-block m-auto" width="auto" height="auto" [alt]=" brand.name" />
+                            class="d-block m-auto brand-logo" [alt]=" 'Car Brand - ' + brand.name" loading="lazy" decoding="async" />
                     </div>
 
                     <h3>{{brand.name}}</h3>

@@ -1085,6 +1085,22 @@
   transition: all 0.3s linear;
   max-width: 97%;
 
+  .brand-logo-box {
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brand-logo {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
   &:hover {
     background: #e2c38d;
 
@@ -1097,8 +1113,9 @@
   img {
     width: auto;
     height: auto;
-    max-width: 100px;
-    max-height: 75px;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
 }
 
@@ -1211,7 +1228,7 @@
             background: transparent;
             border: 0;
             text-decoration: none;
-            color: rgba(208, 208, 208, 1);
+            color: #f5f5f5;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -1509,6 +1526,7 @@ video {
       font-size: 14px;
       font-weight: 600;
       line-height: 1.4;
+      color: #f5f5f5;
     }
   }
 

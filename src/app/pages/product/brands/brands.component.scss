@@ -84,18 +84,33 @@
     height: 175px;
     transition: all 0.3s linear;
     max-width: 97%;
+  .brand-logo-box {
+    height: 110px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .brand-logo {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
     &:hover{
         background: #E2C38D;
     }
     &:hover h3,&:hover p {
         color: #171717;
     }
-    img{
-        width: auto;
-        height: auto;
-        max-width: 100px;
-        max-height: 75px;
-    }
+  img{
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
 }
 
 .article-section {
@@ -401,19 +416,22 @@
         margin: auto;
         display: block;
         cursor: pointer;
-        height: 100px;
+      height: 140px;
         transition: all 0.3s linear;
         max-width: 97%;
-        div{
-            height: 45px!important;
-            display: block!important;
-        }
+      .brand-logo-box{
+        height: 80px!important;
+        display: flex!important;
+        align-items: center;
+        justify-content: center;
+      }
     }
     .cars_brand   .card   img {
         width: auto;
         height: auto;
-        max-width: 70%;
-        max-height: 40px;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
     }
     .cars_brand  h3, .cars_type  h3{
         font-size: 12px;
