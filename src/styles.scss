@@ -1,13 +1,4 @@
-/* Font performance optimization */
-@font-face {
-  font-family: 'Font Awesome 6 Free';
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Font Awesome 6 Brands';
-  font-display: swap;
-}
+/* Font performance optimization is now handled in fonts.css */
 
 html[lang='ar'],
 body.arabic,
@@ -22,6 +13,32 @@ html[lang='ar'] {
 
 body {
   overflow-x: hidden;
+
+/* Arabic-specific typographic fixes to prevent words from being split or rendered disconnected */
+html[lang='ar'], body.arabic {
+  /* prevent browser from inserting breaks inside Arabic words */
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  -webkit-font-feature-settings: "liga" 1, "calt" 1 !important;
+  font-feature-settings: "liga" 1, "calt" 1 !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* Ensure interactive elements keep Arabic words intact and no text-transform is applied */
+body.arabic a,
+body.arabic button,
+body.arabic .nav-link,
+body.arabic .brand-button,
+body.arabic .category-button,
+body.arabic .cta-primary,
+body.arabic .cta-secondary {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  word-break: keep-all !important;
+  overflow-wrap: normal !important;
+  white-space: nowrap; /* keep single-word labels from breaking */
+}
   // width: 1420px;
   // margin: auto;
 }
@@ -73,6 +90,72 @@ p {
 
 .p-card .p-card-body {
   padding: 10px 15px !important;
+}
+
+/* Ensure cards use normal weight and slightly smaller text by default */
+.p-card .p-card-body {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+}
+
+/* Enforce non-bold across site and fallback for components using strong/b */
+h1, h2, h3, h4, h5, h6,
+strong, b,
+.fw-bold, .font-weight-bold {
+  font-weight: 400 !important;
+}
+
+/* Ensure product card titles are smaller and not bold (override component/scoped styles) */
+.card_product .p-card .title h3,
+::ng-deep .card_product .p-card .title h3 {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+
+/* Stronger override for product card titles in case component-scoped styles apply */
+.card_product .title h3,
+.card_product .card-title,
+.card-title {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.2 !important;
+}
+
+/* Preserve hero/banner styles: restore larger sizes and weights for banner/head inside hero */
+.hero_section h1,
+.head_banner h1,
+.hero_section .head_banner h1 {
+  font-size: 34px !important;
+  font-weight: 500 !important;
+}
+
+.hero_section p,
+.head_banner p,
+.hero_section .head_banner p {
+  font-size: 18px !important;
+  font-weight: 500 !important;
+}
+
+/* Also preserve h2/h3 inside hero if present */
+.hero_section h2,
+.head_banner h2 {
+  font-size: 24px !important;
+  font-weight: 500 !important;
+}
+
+
+/* Make PrimeNG cards use full height and flex layout so grid cards match heights */
+.p-card{
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.p-card .p-card-content, .p-card .p-card-body{
+  flex: 1 1 auto;
+}
+.p-card .p-card-footer{
+  margin-top: auto;
 }
 
 // loader
@@ -222,4 +305,16 @@ input[type="button"],
     right: auto !important;
     text-align: left;
   }
+}
+
+/* Reduce forced reflow impact from 3rd-party UI components (e.g. accordions)
+   These rules confine layout invalidation and hint the browser to optimize
+   paint for transform/opacity; they don't change visuals. */
+::ng-deep .p-accordion,
+::ng-deep .p-accordion .p-accordion-tab,
+::ng-deep .p-accordion .p-accordion-content {
+  contain: layout; /* confines layout changes to this subtree */
+  will-change: transform, opacity;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }

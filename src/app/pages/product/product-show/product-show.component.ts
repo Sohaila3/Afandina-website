@@ -1,5 +1,5 @@
 // product-show.component.ts
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { LanguageService } from 'src/app/core/services/language.service';
 import { TranslationService } from 'src/app/core/services/Translation/translation.service';
@@ -10,13 +10,16 @@ import { isPlatformServer } from '@angular/common';
 import { SeoService } from 'src/app/services/seo/seo.service';
 import { isPlatformBrowser } from '@angular/common';
 import { SharedDataService } from 'src/app/services/SharedDataService/shared-data-service.service';
+import { ViewportService } from 'src/app/core/services/viewport.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-product-show',
   templateUrl: './product-show.component.html',
   styleUrls: ['./product-show.component.scss'],
 })
-export class ProductShowComponent {
+export class ProductShowComponent implements OnDestroy {
   ProductSlug: string | undefined;
   productDetails: ProductResource | null = null;
   images: any[] | undefined;
@@ -32,6 +35,8 @@ export class ProductShowComponent {
   currentImageIndex: number = 0;
   // Description expand/collapse
   isDescriptionExpanded: boolean = false;
+
+  private destroy$ = new Subject<void>();
 
   swiperCard: any = {
     breakpoints: {
@@ -54,7 +59,8 @@ export class ProductShowComponent {
     private translationService: TranslationService,
     @Inject(PLATFORM_ID) private platformId: Object,
     private seo: SeoService,
-    private sharedDataService: SharedDataService
+    private sharedDataService: SharedDataService,
+    private viewport: ViewportService
   ) {
     this.responsiveOptions = [
       {
@@ -82,22 +88,36 @@ export class ProductShowComponent {
 
   ngOnInit(): void {
     this.currentLang = this.languageService.getCurrentLanguage();
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        this.currentLang = this.languageService.getCurrentLanguage();
-      }
-    });
-    this.route.params.subscribe((params) => {
-      this.ProductSlug = this.route.snapshot.params['slug'];
-      this.getProductBySlug();
-    });
-    this.translationService.getTranslations().subscribe((data) => {
-      this.translations = data;
-    });
-    this.sharedDataService.currentWhatsapp.subscribe((data) => {
-      this.contactData = data || {};
-    });
+    this.router.events
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((event) => {
+        if (event instanceof NavigationEnd) {
+          this.currentLang = this.languageService.getCurrentLanguage();
+        }
+      });
+    this.route.params
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.ProductSlug = this.route.snapshot.params['slug'];
+        this.getProductBySlug();
+      });
+    this.translationService
+      .getTranslations()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => {
+        this.translations = data;
+      });
+    this.sharedDataService.currentWhatsapp
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((data) => {
+        this.contactData = data || {};
+      });
     this.updateNumVisible(window.innerWidth);
+
+    // react to viewport width changes via shared service (single listener app-wide)
+    this.viewport.width$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((width) => this.updateNumVisible(width));
   }
 
   get whatsappUrl(): string {
@@ -220,11 +240,6 @@ export class ProductShowComponent {
     return this.getTruncatedTitle(description, 160);
   }
 
-  @HostListener('window:resize', ['$event'])
-  onResize(event: any) {
-    this.updateNumVisible(event.target.innerWidth);
-  }
-
   @HostListener('window:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (!this.isFullScreen) return;
@@ -236,6 +251,11 @@ export class ProductShowComponent {
     } else if (event.key === 'ArrowRight') {
       this.nextImage();
     }
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   updateNumVisible(width: number) {

@@ -6,7 +6,10 @@ import {
   ElementRef,
   OnDestroy,
   OnInit,
+  Inject,
+  PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -45,6 +48,7 @@ export class ProductFilterComponent implements OnInit, OnDestroy {
       return `${value}`;
     }
   };
+  isBrowser: boolean = false;
   translations: Record<string, string> = {};
 
   selectedCategories: number[] = [];
@@ -66,6 +70,7 @@ export class ProductFilterComponent implements OnInit, OnDestroy {
     private translationService: TranslationService,
     private sharedDataService: SharedDataService,
     private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: Object,
 
   ) {
     this.productFilterForm = this.fb.group({
@@ -80,6 +85,7 @@ export class ProductFilterComponent implements OnInit, OnDestroy {
       monthly_main_price: [[100, 30000]],
       word: [''],
     });
+    this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
 

@@ -1,4 +1,4 @@
-import { NgModule, isDevMode, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { NgModule, isDevMode, NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA, APP_INITIALIZER } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { AppRoutingModule } from './app-routing.module';
@@ -23,7 +23,19 @@ import { TranslationService } from './core/services/Translation/translation.serv
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { NotFoundInterceptor } from './core/interceptors/not-found.interceptor';
 import { AllCarsComponent } from './pages/all-cars/all-cars.component';
-import { ProductUiModule } from './pages/product/product-ui.module';
+
+// Load a minimal translation file before bootstrap to avoid showing fallback text
+export function loadInitialTranslationsFactory(http: HttpClient, ts: TranslationService) {
+  return () =>
+    http
+      .get<Record<string, string>>('/assets/i18n/en.json')
+      .toPromise()
+      .then((data) => {
+        ts.setTranslations(data || {});
+        ts.setCurrentLang('en');
+      })
+      .catch(() => { });
+}
 
 @NgModule({
   declarations: [
@@ -48,7 +60,6 @@ import { ProductUiModule } from './pages/product/product-ui.module';
     }),
     SharedModule,
     SwiperModule,
-    ProductUiModule,
   ],
   providers: [
     {
@@ -69,8 +80,14 @@ import { ProductUiModule } from './pages/product/product-ui.module';
     LoaderService,
     LanguageService,
     TranslationService,
+    {
+      provide: APP_INITIALIZER,
+      useFactory: loadInitialTranslationsFactory,
+      deps: [HttpClient, TranslationService],
+      multi: true,
+    },
   ],
   schemas: [NO_ERRORS_SCHEMA, CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],
 })
-export class AppModule {}
+export class AppModule { }

@@ -66,8 +66,16 @@ export class CardBlogComponent implements OnInit, OnDestroy {
 
   onImgError(event: Event): void {
     const target = event.target as HTMLImageElement | null;
-    if (target && target.src !== window.location.origin + this.fallbackImage) {
-      target.src = this.fallbackImage;
+    if (target) {
+      try {
+        const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
+        if (target.src !== origin + this.fallbackImage) {
+          target.src = this.fallbackImage;
+        }
+      } catch (e) {
+        // Fallback assignment when window is not available (SSR)
+        target.src = this.fallbackImage;
+      }
     }
   }
 }

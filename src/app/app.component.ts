@@ -3,9 +3,10 @@ import {
   Inject,
   PLATFORM_ID,
   Optional,
-  HostListener,
   OnDestroy,
   OnInit,
+  ChangeDetectorRef,
+  NgZone,
 } from '@angular/core';
 import { BrandsSection, CategoriesSection } from './Models/home.model';
 
@@ -70,6 +71,8 @@ export class AppComponent implements OnInit, OnDestroy {
   isLoading$ = this.loaderService.loading$;
 
   private destroy$ = new Subject<void>();
+  private _scrollListener: any;
+  private _scrollTicking = false;
   private settingsCache = new Map<string, any>();
   private settingsRequestInFlight = false;
 
@@ -91,7 +94,9 @@ export class AppComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
 
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
   ) {}
 
   ngOnInit() {
@@ -120,6 +125,7 @@ export class AppComponent implements OnInit, OnDestroy {
     // Load settings immediately on the client to avoid double render caused by delayed fetch
     if (isPlatformBrowser(this.platformId)) {
       this.getSettings();
+      this.initScrollListener();
     }
   }
 
@@ -288,19 +294,32 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  // مراقبة حدث التمرير
-  @HostListener('window:scroll')
-  onWindowScroll() {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-    // ظهور الزر عندما يتجاوز التمرير 300 بكسل
-    const scrollPosition =
-      window.pageYOffset ||
-      document.documentElement.scrollTop ||
-      document.body.scrollTop ||
-      0;
-    this.isScrolled = scrollPosition > 300;
+  // مراقبة حدث التمرير (passive + rAF throttled)
+  private initScrollListener() {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.ngZone.runOutsideAngular(() => {
+      this._scrollListener = () => {
+        if (this._scrollTicking) return;
+        this._scrollTicking = true;
+        requestAnimationFrame(() => {
+          const scrollPosition =
+            window.pageYOffset ||
+            document.documentElement.scrollTop ||
+            document.body.scrollTop ||
+            0;
+          const newScrolled = scrollPosition > 300;
+          if (this.isScrolled !== newScrolled) {
+            this.ngZone.run(() => {
+              this.isScrolled = newScrolled;
+              this.cdr.markForCheck();
+            });
+          }
+          this._scrollTicking = false;
+        });
+      };
+      window.addEventListener('scroll', this._scrollListener, { passive: true });
+    });
   }
 
   // وظيفة التمرير لأعلى الصفحة
@@ -317,6 +336,9 @@ export class AppComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this._scrollListener && isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('scroll', this._scrollListener as EventListener);
+    }
   }
 
   private scheduleIdleTask(task: () => void, timeout = 1200) {

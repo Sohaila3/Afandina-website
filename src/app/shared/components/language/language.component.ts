@@ -110,7 +110,9 @@ export class LanguageComponent implements OnInit, OnDestroy {
     const newUrl = this.getLanguageUrl(newLang);
     // Persist choice silently for future sessions; no emit to avoid mid-flight updates
     this.languageService.setCurrentLanguage(newLang, false);
-    window.location.replace(newUrl);
+    if (typeof window !== 'undefined') {
+      window.location.replace(newUrl);
+    }
   }
 
   toggleLanguage(): void {

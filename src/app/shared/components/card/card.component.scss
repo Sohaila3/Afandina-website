@@ -3,12 +3,13 @@
   border: 1px solid #e8e8e8;
   border-radius: 12px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  margin: 0;
+  margin: 8px; /* add spacing between cards */
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   max-width: 340px !important;
   background: #fff;
   position: relative;
+  min-height: 480px; /* slightly reduced to help denser layout */
 
   &:hover {
     border: 1px solid #dcb87a;
@@ -138,12 +139,12 @@
     }
 
     h3 {
-      font-size: 19px;
-      font-weight: 700;
+      font-size: 16px; /* reduced title size */
+      font-weight: 500;
       color: #1a1a1a;
       width: fit-content;
       letter-spacing: -0.3px;
-      line-height: 1.3;
+      line-height: 1.25;
       transition: color 0.3s ease;
     }
 
@@ -538,20 +539,23 @@
 .custom-pagination {
   position: absolute;
   left: 50%;
-  bottom: 14px;
+  /* move further down toward the card edge */
+  bottom: -6px;
   transform: translateX(-50%);
-  z-index: 130;
+  z-index: 1000; /* raise so it's above other card elements */
   pointer-events: auto;
 }
 
 .custom-pagination-viewport {
-  overflow: hidden;
+  /* allow dots to overflow slightly so they remain clickable */
+  overflow: visible;
   width: 160px; /* enough for 4 small bars; adjust if maxVisibleDots changes */
 }
 
 .custom-pagination-list {
   display: flex;
-  gap: 10px;
+  /* أقرب بينهم قليلاً */
+  gap: 4px;
   align-items: center;
   justify-content: center;
   transition: transform 0.22s ease;
@@ -564,6 +568,7 @@
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
+  z-index: 1100; /* ensure dot is above overlays */
   padding: 0;
   background: transparent;
   border: none;
@@ -578,6 +583,7 @@
     background: rgba(255, 255, 255, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.14);
     transition: all 0.18s ease;
+    pointer-events: none; /* allow the button to receive pointer events */
   }
 
   &:hover::before {
@@ -601,7 +607,7 @@
   height: 6px !important;
   border-radius: 4px !important;
   transition: all 0.22s ease !important;
-  margin: 0 6px !important;
+  margin: 0 4px !important;
 }
 
 ::ng-deep .swiper-pagination-bullet-active {

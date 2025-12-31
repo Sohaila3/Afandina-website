@@ -290,8 +290,19 @@ export class ProductCardComponent implements OnInit, AfterViewInit, OnDestroy, O
       } else {
         this.productSwiper?.swiperRef?.slideTo(index);
       }
-      this.currentIndex = index;
-      this.updateWindow();
+      // DO NOT set currentIndex immediately on hover/click — wait for swiper to update
+      // ensure state sync after navigation (some swiper builds update index after transition)
+      setTimeout(() => {
+        try {
+          const swiperRef = this.productSwiper?.swiperRef;
+          const active = swiperRef?.realIndex ?? swiperRef?.activeIndex ?? this.currentIndex;
+          // update currentIndex after transition completes
+          this.currentIndex = active;
+          this.updateWindow();
+        } catch (e) {
+          // ignore
+        }
+      }, 120);
     } catch (err) {
       // ignore
     }

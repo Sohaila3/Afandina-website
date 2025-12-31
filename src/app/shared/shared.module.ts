@@ -48,4 +48,4 @@ import { AccordionModule } from 'primeng/accordion';
     ScrollToTopComponent,
   ],
 })
-export class SharedModule {}
+export class SharedModule { }

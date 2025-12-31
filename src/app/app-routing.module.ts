@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes, PreloadAllModules } from '@angular/router';
+import { RouterModule, Routes, NoPreloading } from '@angular/router';
 import { NotFoundComponent } from './pages/not-found/not-found.component';
 import { BlogDetailsComponent } from './pages/blog/blog-details/blog-details.component';
 import { productRoutesCanMatch } from './pages/product/product-routes.can-match';
@@ -89,7 +89,7 @@ const routes: Routes = [
     RouterModule.forRoot(routes, {
       scrollPositionRestoration: 'top',
       initialNavigation: 'enabledBlocking',
-      preloadingStrategy: PreloadAllModules,
+      preloadingStrategy: NoPreloading,
     }),
   ],
   exports: [RouterModule],

@@ -61,19 +61,16 @@
     .social-icon-wrapper {
       position: relative;
 
+      /* keep any decorative pseudo element but keep it hidden by default */
       &::before {
         content: "";
         position: absolute;
         inset: -2px;
-        background: linear-gradient(45deg, #dcb87a, #e5b64c);
         border-radius: 50%;
         opacity: 0;
-        transition: opacity 0.4s ease;
+        transition: opacity 0.25s ease;
         z-index: -1;
-      }
-
-      &:hover::before {
-        opacity: 1;
+        pointer-events: none;
       }
 
       .social-link {
@@ -92,32 +89,34 @@
         position: relative;
         overflow: hidden;
 
+        /* remove inner overlay coloring; use outer ring on hover instead */
         &::after {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            135deg,
-            rgba(220, 184, 122, 0.3),
-            rgba(229, 182, 76, 0.3)
-          );
+          background: transparent;
           opacity: 0;
-          transition: opacity 0.4s ease;
+          transition: opacity 0.25s ease;
+          pointer-events: none;
         }
 
         &:hover {
-          transform: translateY(-4px) scale(1.1);
-          background: rgba(220, 184, 122, 0.2);
-          border-color: #dcb87a;
-          box-shadow: 0 10px 30px rgba(220, 184, 122, 0.4);
+          transform: translateY(-2px) scale(1.03);
+          /* keep inner background subtle and not colored */
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(255, 255, 255, 0.22);
+
+          /* outer glow ring only (no inner fill) */
+          box-shadow: 0 0 0 6px rgba(220, 184, 122, 0.08), 0 6px 18px rgba(0,0,0,0.25);
 
           &::after {
-            opacity: 1;
+            opacity: 0; /* ensure inner overlay stays hidden */
           }
 
           i {
             color: #dcb87a;
-            transform: scale(1.2);
+            transform: scale(1.05);
+            transition: transform 0.18s ease, color 0.18s ease;
           }
         }
 
@@ -293,9 +292,9 @@
       animation: slideInLeft 0.8s ease-out 0.2s both;
 
       .badge-text {
-        font-size: 14px;
-        font-weight: 600;
-        letter-spacing: 2px;
+        font-size: 13px;
+        font-weight: 400;
+        letter-spacing: 1px;
         text-transform: uppercase;
         background: linear-gradient(135deg, #dcb87a, #e5b64c);
         -webkit-background-clip: text;
@@ -305,10 +304,10 @@
     }
 
     .hero-title {
-      font-size: clamp(36px, 6vw, 72px);
-      font-weight: 800;
-      line-height: 1.1;
-      margin: 0 0 24px;
+      font-size: clamp(30px, 5.5vw, 60px);
+      font-weight: 400;
+      line-height: 1.15;
+      margin: 0 0 20px;
       color: #fff;
       display: flex;
       flex-direction: column;
@@ -339,10 +338,10 @@
     }
 
     .hero-description {
-      font-size: 18px;
+      font-size: 16px;
       line-height: 1.6;
       color: rgba(255, 255, 255, 0.9);
-      margin: 0 0 40px;
+      margin: 0 0 32px;
       max-width: 600px;
       animation: slideInLeft 0.8s ease-out 0.6s both;
     }
@@ -357,9 +356,9 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 18px 36px;
-        font-size: 16px;
-        font-weight: 600;
+        padding: 16px 32px;
+        font-size: 15px;
+        font-weight: 400;
         border: none;
         border-radius: 50px;
         cursor: pointer;
@@ -472,8 +471,8 @@
           flex-direction: column;
 
           .stat-number {
-            font-size: 28px;
-            font-weight: 800;
+            font-size: 24px;
+            font-weight: 400;
             color: #fff;
             line-height: 1;
             margin-bottom: 4px;
@@ -1515,7 +1514,7 @@ video {
     }
   }
 
-  ::ng-deep .p-accordion {
+  ::ng-deep .home .p-accordion {
     .p-accordion-header .p-accordion-header-link,
     .p-accordion-content {
       padding: 7px 5px;

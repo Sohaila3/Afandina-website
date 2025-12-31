@@ -3,12 +3,13 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  HostListener,
   Inject,
+  HostListener,
   Input,
   OnDestroy,
   PLATFORM_ID,
   ViewChild,
+  NgZone,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { LanguageService } from 'src/app/core/services/language.service';
@@ -23,6 +24,8 @@ import {
 } from 'src/app/Models/home.model';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { rafThrottle } from 'src/app/shared/utils/raf-throttle';
+import { ViewportService } from 'src/app/core/services/viewport.service';
 
 @Component({
   selector: 'app-navbar',
@@ -53,8 +56,10 @@ export class NavbarComponent implements OnDestroy {
   isDropdownVisible = false;
   search: boolean = false;
   translations: Record<string, string> = {};
+  translationsReady: boolean = false;
   // isMobile = window.innerWidth <= 768;
   isMobile = false;
+  private _rafSearch!: (...args: any[]) => void;
   // whether the nav is scrolled (used to apply compact/sticky styles)
   isScrolled: boolean = false;
 
@@ -67,38 +72,47 @@ export class NavbarComponent implements OnDestroy {
     private translationService: TranslationService,
     @Inject(PLATFORM_ID) private platformId: Object,
     public sharedDataService: SharedDataService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private viewport: ViewportService
   ) {
-    if (isPlatformBrowser(this.platformId)) {
-      this.router.events
+      if (isPlatformBrowser(this.platformId)) {
+        this.router.events
         .pipe(takeUntil(this.destroy$))
         .subscribe(() => {
           this.closeNavbar();
         });
-      this.isMobile = window.innerWidth <= 768;
+      // subscribe once to shared viewport stream to avoid multiple window listeners
+      this.viewport.isMobile$
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((isMobile) => {
+          this.isMobile = isMobile;
+          this.cdr.markForCheck();
+        });
     }
   }
+  private _scrollListener: any;
+  private _scrollTicking = false;
 
   isHomePage(): boolean {
     return this.router.url.includes('home');
   }
 
   ngOnInit(): void {
-    this.currentLang = this.languageService.getCurrentLanguage();
-    // React instantly to language toggles without waiting for navigation
-    this.languageService.languageChange$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((lang) => {
-        if (!lang || lang === this.currentLang) return;
-        this.currentLang = lang;
-        this.cdr.markForCheck();
-      });
+    // Prefer the language reported by TranslationService (set after translations load),
+    // fallback to LanguageService if not available yet. This avoids rendering old
+    // translation strings briefly when the user switches language.
+    // Prefer the language derived from the URL / storage (LanguageService),
+    // fall back to TranslationService's reported lang. This avoids briefly
+    // showing English when translation service defaults to 'en' before payload arrives.
+    this.currentLang = this.languageService.getCurrentLanguage() || this.translationService.getCurrentLang();
 
     this.router.events
       .pipe(takeUntil(this.destroy$))
       .subscribe((event) => {
         if (event instanceof NavigationEnd) {
-          this.currentLang = this.languageService.getCurrentLanguage();
+          // prefer the language from URL/storage (LanguageService)
+          this.currentLang = this.languageService.getCurrentLanguage() || this.translationService.getCurrentLang();
           this.cdr.markForCheck();
         }
       });
@@ -107,7 +121,25 @@ export class NavbarComponent implements OnDestroy {
         .getTranslations()
         .pipe(takeUntil(this.destroy$))
         .subscribe((data) => {
-          this.translations = data;
+          this.translations = data || {};
+          // mark translationsReady only when translations belong to current language
+          const hasData = this.translations && Object.keys(this.translations).length > 0;
+          const translationsLang = this.translationService.getCurrentLang();
+          this.translationsReady = hasData && translationsLang === this.currentLang;
+          this.cdr.markForCheck();
+        });
+
+      // also listen for translation service language changes to reset readiness
+      this.translationService
+        .onLangChange()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((lang) => {
+          // When language changes, wait until translations for that language arrive
+          this.translationsReady = false;
+          // Update currentLang only when translation service reports it
+          if (lang) {
+            this.currentLang = lang;
+          }
           this.cdr.markForCheck();
         });
 
@@ -125,6 +157,23 @@ export class NavbarComponent implements OnDestroy {
           this.cdr.markForCheck();
         });
 
+      // raf-throttled search executor: performs the actual HTTP call
+      this._rafSearch = rafThrottle((search_key: string) => {
+        this.homeService
+          .getSearch({ query: search_key })
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(
+            (res: any) => {
+              this.searchResults = res.data;
+              this.showDropdown = true;
+              this.cdr.markForCheck();
+            },
+            () => {
+              // handle error silently
+            }
+          );
+      });
+
       this.sharedDataService.locations$
         .pipe(takeUntil(this.destroy$))
         .subscribe((res) => {
@@ -132,6 +181,7 @@ export class NavbarComponent implements OnDestroy {
           this.cdr.markForCheck();
         });
     }
+    this.initScrollListener();
   }
 
   getLocationList() {
@@ -211,26 +261,16 @@ export class NavbarComponent implements OnDestroy {
   }
 
   Search(event: any): void {
-    const search_key = event.target.value;
-    if (search_key && search_key.trim() !== '') {
-      this.homeService
-        .getSearch({ query: search_key })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe(
-          (res: any) => {
-            this.searchResults = res.data;
-            this.showDropdown = true;
-            this.cdr.markForCheck();
-          },
-          () => {
-            // handle error
-          }
-        );
-    } else {
+    const search_key = (event.target.value || '').toString();
+    // clear immediately on empty input to avoid stale dropdown
+    if (!search_key || search_key.trim() === '') {
       this.showDropdown = false;
       this.searchResults = [];
       this.cdr.markForCheck();
+      return;
     }
+    // schedule throttled search via rAF — reduces layout/read/write thrash
+    this._rafSearch(search_key);
   }
 
   onFocus() {
@@ -251,27 +291,36 @@ export class NavbarComponent implements OnDestroy {
     }
   }
 
-  @HostListener('window:resize')
-  onResize() {
-    if (isPlatformBrowser(this.platformId)) {
-      this.isMobile = window.innerWidth <= 768;
-      this.cdr.markForCheck();
-    }
-  }
-
   // Add a scroll listener to toggle the compact scrolled state
-  @HostListener('window:scroll', [])
-  onWindowScroll() {
+  private initScrollListener() {
     if (!isPlatformBrowser(this.platformId)) return;
-    const offset =
-      window.pageYOffset || document.documentElement.scrollTop || 0;
-    // Threshold can be adjusted as needed
-    this.isScrolled = offset > 60;
-    this.cdr.markForCheck();
+
+    this.ngZone.runOutsideAngular(() => {
+      this._scrollListener = () => {
+        if (this._scrollTicking) return;
+        this._scrollTicking = true;
+        requestAnimationFrame(() => {
+          const offset =
+            window.pageYOffset || document.documentElement.scrollTop || 0;
+          const newScrolled = offset > 60;
+          if (this.isScrolled !== newScrolled) {
+            this.ngZone.run(() => {
+              this.isScrolled = newScrolled;
+              this.cdr.markForCheck();
+            });
+          }
+          this._scrollTicking = false;
+        });
+      };
+      window.addEventListener('scroll', this._scrollListener, { passive: true });
+    });
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this._scrollListener) {
+      window.removeEventListener('scroll', this._scrollListener as EventListener);
+    }
   }
 }

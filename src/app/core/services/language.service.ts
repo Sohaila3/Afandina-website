@@ -28,9 +28,9 @@ export class LanguageService {
           ? this.ssrLang
           : 'en';
     } else if (isPlatformBrowser(this.platformId)) {
-      const pathSegments = window.location.pathname
-        .split('/')
-        .filter((segment) => segment);
+        const pathSegments = (typeof window !== 'undefined' && window.location && window.location.pathname)
+          ? window.location.pathname.split('/').filter((segment) => segment)
+          : [];
       if (pathSegments.length > 0 && /^[a-z]{2}$/i.test(pathSegments[0])) {
         const seg = pathSegments[0].toLowerCase();
         // If segment is supported, use it. Otherwise redirect to same path with 'en'
@@ -41,7 +41,7 @@ export class LanguageService {
           // replace invalid language with 'en' and redirect
           pathSegments[0] = 'en';
           const newPath = '/' + pathSegments.join('/');
-          if (newPath !== window.location.pathname) {
+            if (typeof window !== 'undefined' && newPath !== window.location.pathname) {
             window.location.href = newPath;
             // stop further execution in this constructor — browser will navigate
             return;

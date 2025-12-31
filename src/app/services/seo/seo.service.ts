@@ -368,12 +368,17 @@ export class SeoService {
    */
   private getCurrentPathWithoutLanguage(): string {
     if (isPlatformBrowser(this.platformId)) {
-      const pathSegments = window.location.pathname.split('/');
-      // Remove empty first segment and language code
-      if (pathSegments.length > 1 && /^[a-z]{2}$/i.test(pathSegments[1])) {
-        return '/' + pathSegments.slice(2).join('/');
+      try {
+        const pathname = (typeof window !== 'undefined' && window.location && window.location.pathname) ? window.location.pathname : '';
+        const pathSegments = pathname.split('/');
+        // Remove empty first segment and language code
+        if (pathSegments.length > 1 && /^[a-z]{2}$/i.test(pathSegments[1])) {
+          return '/' + pathSegments.slice(2).join('/');
+        }
+        return pathname;
+      } catch (e) {
+        return '';
       }
-      return window.location.pathname;
     } else if (isPlatformServer(this.platformId)) {
       // For server-side rendering
       const location = this.platformLocation as any;
@@ -399,7 +404,11 @@ export class SeoService {
    */
   private getBaseUrl(): string {
     if (isPlatformBrowser(this.platformId)) {
-      return `${window.location.protocol}//${window.location.host}`;
+      try {
+        return `${window.location.protocol}//${window.location.host}`;
+      } catch (e) {
+        return '';
+      }
     } else if (isPlatformServer(this.platformId)) {
       const location = this.platformLocation as any;
       return `${location.protocol}//${location.hostname}${

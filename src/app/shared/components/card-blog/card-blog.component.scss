@@ -1,3 +1,8 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -18,6 +23,10 @@
     margin: auto;
     box-shadow: none;
     text-transform: capitalize;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 520px;
     .p-card-header .blog_img{
         border-top-left-radius: 7px;
         border-top-right-radius: 7px;
@@ -44,8 +53,14 @@
             font-weight: 500;
         }
     }
+    .p-card-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
     .p-card-content{
         padding: 0;
+        flex: 1 1 auto;
     }
     
     .date{
@@ -58,17 +73,21 @@
     }
     .title{
         h3{
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 400;
             color: #171717;
+            margin: 0;
+            line-height: 1.2;
+            word-break: break-word;
         }
     }
     .car_details{
-        height: 30px;
         p{
             color: #525252;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 500;
+            margin: 0;
+            word-break: break-word;
         }
     }
     .p-card-footer {

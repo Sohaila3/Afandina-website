@@ -98,9 +98,7 @@
       [routerLink]="['/', currentLang, 'product', carData.slug]"
       [title]="carData.name"
     >
-      <h3 class="m-0 ellipse one-lines" [title]="carData.name">
-        {{ carData.name.split(" ").slice(0, 3).join(" ") }}
-      </h3>
+      <h3 class="m-0 card-title" [title]="carData.name">{{ carData.name }}</h3>
     </a>
   </div>
 

@@ -106,6 +106,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
   private performanceObservers: PerformanceObserver[] = [];
   private swiperModulesRegistered = false;
   private swiperModuleInitPromise?: Promise<void>;
+  private swiperStylePromise?: Promise<void>;
+  private swiperStylesLoaded = false;
   private homeRequestInFlight = false;
   private homeCache = new Map<string, HomeResponse>();
   private blogsRequested = false;
@@ -128,6 +130,8 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     loop: true,
     grabCursor: true,
     watchSlidesProgress: true,
+    observer: true,
+    observeParents: true,
     on: {
       slideChange: () => {
         this.onSlideChange();
@@ -956,7 +960,9 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (!this.swiperModuleInitPromise) {
-      this.swiperModuleInitPromise = import('swiper')
+      const stylePromise = this.loadSwiperStyles();
+
+      const modulePromise = import('swiper')
         .then(
           ({
             default: Swiper,
@@ -973,9 +979,52 @@ export class HomeComponent implements OnInit, AfterViewInit, OnDestroy {
         .catch(() => {
           this.swiperModulesRegistered = false;
         });
+
+      this.swiperModuleInitPromise = Promise.all([modulePromise, stylePromise])
+        .then(() => void 0)
+        .catch(() => void 0);
     }
 
     return this.swiperModuleInitPromise;
+  }
+
+  private loadSwiperStyles(): Promise<void> {
+    if (!this.isBrowserEnv || this.swiperStylesLoaded) {
+      return Promise.resolve();
+    }
+
+    if (!this.swiperStylePromise) {
+      this.swiperStylePromise = new Promise<void>((resolve, reject) => {
+        const existing = this.document?.head.querySelector('link[data-swiper-style="true"]');
+        if (existing) {
+          this.swiperStylesLoaded = true;
+          resolve();
+          return;
+        }
+
+        const linkEl = this.document?.createElement('link');
+        if (!linkEl) {
+          resolve();
+          return;
+        }
+
+        linkEl.rel = 'stylesheet';
+        linkEl.href = 'https://unpkg.com/swiper@7.0.7/swiper-bundle.min.css';
+        linkEl.setAttribute('data-swiper-style', 'true');
+        linkEl.onload = () => {
+          this.swiperStylesLoaded = true;
+          resolve();
+        };
+        linkEl.onerror = (err) => {
+          this.swiperStylesLoaded = false;
+          reject(err);
+        };
+
+        this.document?.head.appendChild(linkEl);
+      }).catch(() => void 0);
+    }
+
+    return this.swiperStylePromise;
   }
 
   private disconnectPerformanceObservers() {

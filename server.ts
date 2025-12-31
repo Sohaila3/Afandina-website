@@ -24,6 +24,8 @@ const cacheMiddleware = (duration: number) => {
     const cachedBody = mcache.get(key);
 
     if (cachedBody) {
+      res.set('X-Cache', 'HIT');
+      res.set('Cache-Control', `public, max-age=${duration}`);
       res.send(cachedBody);
       return;
     }
@@ -31,6 +33,8 @@ const cacheMiddleware = (duration: number) => {
     const originalSend = res.send.bind(res);
     res.send = function (body: any): Response {
       mcache.put(key, body, duration * 1000);
+      res.set('X-Cache', 'MISS');
+      res.set('Cache-Control', `public, max-age=${duration}`);
       return originalSend(body);
     };
     next();
@@ -79,7 +83,8 @@ export function app(): express.Express {
     })
   );
 
-  server.get('*', cacheMiddleware(30), (req, res) => {
+  // Increase server-side rendered page cache to reduce repeated SSR cost
+  server.get('*', cacheMiddleware(300), (req, res) => {
     // Extract language from URL and enforce allowed languages (server-side redirect if unsupported)
     const pathSegments = req.path.split('/').filter((segment) => segment);
     const defaultLang = 'en';
@@ -91,14 +96,18 @@ export function app(): express.Express {
       if (allowedLanguages.includes(seg)) {
         lang = seg;
       } else {
-        // Redirect to same path with 'en' as language
-        const newPath = '/' + [defaultLang, ...pathSegments.slice(1)].join('/');
-        return res.redirect(301, newPath);
+        // Avoid redirecting for unsupported language segments to save a network round-trip.
+        // Render the page with the default language instead.
+        lang = defaultLang;
       }
     }
 
     // Set language in headers
     req.headers['accept-language'] = lang;
+
+    // Ensure responses include the language and SSR indicators for caching/CDN
+    res.set('Content-Language', lang);
+    res.set('X-SSR', '1');
 
     res.render(indexHtml, {
       req,

@@ -1,0 +1,40 @@
+/* Font Awesome 6 Free - Optimized for performance */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+      src: url('~@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2') format('woff2'),
+        url('~@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Font Awesome 6 Brands';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+      src: url('~@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2') format('woff2'),
+        url('~@fortawesome/fontawesome-free/webfonts/fa-brands-400.ttf') format('truetype');
+}
+
+/* Font Awesome Pro - if used */
+@font-face {
+  font-family: 'Font Awesome 6 Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+      src: url('~@fortawesome/fontawesome-free/webfonts/fa-regular-400.woff2') format('woff2'),
+        url('~@fortawesome/fontawesome-free/webfonts/fa-regular-400.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Font Awesome 6 Pro';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+      src: url('~@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2') format('woff2'),
+        url('~@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf') format('truetype');
+}
+
+/* Import the base Font Awesome styles */
+@import "~@fortawesome/fontawesome-free/css/all.min.css";
